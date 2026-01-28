@@ -1,0 +1,21 @@
+{
+  "name": "Vũng Tàu - Thành phố biển",
+  "short_name": "Vũng Tàu",
+  "description": "Khám phá Vũng Tàu - điểm đến lý tưởng cho du lịch, ẩm thực, hẹn hò và sống ảo",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "icons": [
+    {
+      "src": "/favicon36phophuong.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon36phophuong.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
