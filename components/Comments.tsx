@@ -158,9 +158,11 @@ export default function Comments({ placeId }: { placeId: string }) {
                     {comment.profiles?.avatar_url ? (
                       <Image
                         src={comment.profiles.avatar_url}
-                        alt={comment.profiles.name || "User"}
+                        alt={`Ảnh đại diện của ${comment.profiles.name || "người dùng"}`}
+                        title={comment.profiles.name || "Người dùng"}
                         fill
                         className="object-cover"
+                        sizes="40px"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-gray-400">
@@ -170,7 +172,7 @@ export default function Comments({ placeId }: { placeId: string }) {
                   </div>
                   <div>
                     <div className="font-bold text-gray-900">
-                      {comment.profiles?.name || comment.profiles?.email?.split('@')[0] || "Người dùng ẩn danh"}
+                      {comment.profiles?.name || comment.profiles?.email?.split('@')[0] || "Người dùng"}
                     </div>
                     <div className="text-xs text-gray-500">
                       {formatDate(comment.created_at)}

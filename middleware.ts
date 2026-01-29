@@ -40,9 +40,25 @@ export async function middleware(request: NextRequest) {
       return response;
     }
 
-    // Nếu chưa đăng nhập hoặc không phải email admin -> Về trang chủ
-    if (!user || user.email !== "hoangthienluan17@gmail.com") {
-      return NextResponse.redirect(new URL("/", request.url));
+    // Nếu chưa đăng nhập -> Về trang login
+    if (!user) {
+      return NextResponse.redirect(new URL("/admin/login", request.url));
+    }
+
+    // Nếu là trang profile -> Cho phép truy cập (vì user thường cũng cần xem profile)
+    if (request.nextUrl.pathname === "/admin/profile") {
+      return response;
+    }
+
+    // Các trang admin khác (dashboard, users, places...) -> Kiểm tra role admin
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+
+    if (profile?.role !== 'admin' && user.email !== "hoangthienluan17@gmail.com") {
+      return NextResponse.redirect(new URL("/forbidden", request.url));
     }
   }
 

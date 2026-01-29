@@ -4,11 +4,12 @@ import PlaceForm from "../../place-form";
 
 export default async function EditPlacePage({ params }: { params: { id: string } }) {
   const supabase = await createClient();
+  const id = decodeURIComponent(params.id);
   
   const { data: place, error } = await supabase
     .from("places")
     .select("*")
-    .eq("id", params.id)
+    .eq("id", id)
     .single();
 
   if (error || !place) return <div className="p-8 text-red-500">Không tìm thấy địa điểm.</div>;

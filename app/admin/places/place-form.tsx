@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Save, ArrowLeft, Upload, Image as ImageIcon, X, Lock, Trash2, Check } from "lucide-react";
+import { Loader2, Save, ArrowLeft, Upload, Image as ImageIcon, X, Lock, Trash2, Check, Plus } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { createClient } from "@/utils/supabase/client";
@@ -14,6 +14,17 @@ interface PlaceFormProps {
   isEdit?: boolean;
 }
 
+const generateSlug = (str: string) => {
+  return str
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[đĐ]/g, "d")
+    .replace(/[^a-z0-9\s-]/g, "")
+    .trim()
+    .replace(/\s+/g, "-");
+};
+
 export default function PlaceForm({ place, isEdit = false }: PlaceFormProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -21,6 +32,7 @@ export default function PlaceForm({ place, isEdit = false }: PlaceFormProps) {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>(place?.image_url || "");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
   const supabase = createClient();
   const [isAdmin, setIsAdmin] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -31,6 +43,10 @@ export default function PlaceForm({ place, isEdit = false }: PlaceFormProps) {
   const [isCropping, setIsCropping] = useState(false);
   const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [name, setName] = useState(place?.name || "");
+  const [slug, setSlug] = useState(place?.id || "");
+  const [existingGallery, setExistingGallery] = useState<string[]>(place?.gallery_images || []);
+  const [newGalleryFiles, setNewGalleryFiles] = useState<File[]>([]);
 
   useEffect(() => {
     const checkRole = async () => {
@@ -40,7 +56,18 @@ export default function PlaceForm({ place, isEdit = false }: PlaceFormProps) {
           setIsAdmin(true);
           setIsCheckingAuth(false);
         } else {
-          router.push("/");
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single();
+            
+          if (profile?.role === 'admin') {
+            setIsAdmin(true);
+            setIsCheckingAuth(false);
+          } else {
+            router.push("/forbidden");
+          }
         }
       } else {
         router.push("/admin/login");
@@ -48,6 +75,14 @@ export default function PlaceForm({ place, isEdit = false }: PlaceFormProps) {
     };
     checkRole();
   }, [supabase, router]);
+
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setName(val);
+    if (!isEdit) {
+      setSlug(generateSlug(val));
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -101,6 +136,24 @@ export default function PlaceForm({ place, isEdit = false }: PlaceFormProps) {
       imageUrl = publicUrl;
     }
 
+    // Upload gallery images
+    const uploadedGalleryUrls: string[] = [];
+    if (newGalleryFiles.length > 0) {
+      for (const file of newGalleryFiles) {
+        const resizedFile = await resizeImage(file, 1200);
+        const fileName = `gallery-${Date.now()}-${Math.random().toString(36).substring(7)}-${resizedFile.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
+        const { error: uploadError } = await supabase.storage.from('images').upload(fileName, resizedFile);
+        
+        if (!uploadError) {
+          const { data: { publicUrl } } = supabase.storage.from('images').getPublicUrl(fileName);
+          uploadedGalleryUrls.push(publicUrl);
+        }
+      }
+    }
+
+    // Combine existing and new gallery images
+    const finalGallery = [...existingGallery, ...uploadedGalleryUrls];
+
     const data = {
       id: formData.get("id") as string,
       name: formData.get("name") as string,
@@ -110,6 +163,9 @@ export default function PlaceForm({ place, isEdit = false }: PlaceFormProps) {
       description: formData.get("description") as string,
       google_maps_url: formData.get("google_maps_url") as string,
       is_featured: formData.get("is_featured") === "on",
+      opening_hours: formData.get("opening_hours") as string,
+      best_time: formData.get("best_time") as string,
+      gallery_images: finalGallery,
     };
     
     let result;
@@ -205,6 +261,23 @@ export default function PlaceForm({ place, isEdit = false }: PlaceFormProps) {
     }
   };
 
+  const handleGalleryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const files = Array.from(e.target.files);
+      setNewGalleryFiles(prev => [...prev, ...files]);
+      // Reset input
+      e.target.value = "";
+    }
+  };
+
+  const removeExistingGalleryImage = (index: number) => {
+    setExistingGallery(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const removeNewGalleryImage = (index: number) => {
+    setNewGalleryFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
   if (isCheckingAuth) {
     return (
       <div className="flex items-center justify-center p-12">
@@ -226,7 +299,8 @@ export default function PlaceForm({ place, isEdit = false }: PlaceFormProps) {
           <label className="text-sm font-medium text-gray-700">ID (Slug)</label>
           <input
             name="id"
-            defaultValue={place?.id}
+            value={slug}
+            onChange={(e) => setSlug(e.target.value)}
             readOnly={isEdit}
             required
             placeholder="vi-du-slug-dia-diem"
@@ -237,7 +311,12 @@ export default function PlaceForm({ place, isEdit = false }: PlaceFormProps) {
 
         <div className="space-y-2">
           <label className="text-sm font-medium text-gray-700">Tên địa điểm</label>
-          <input name="name" defaultValue={place?.name} required className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-primary-500 outline-none" />
+          <input 
+            name="name" 
+            value={name} 
+            onChange={handleNameChange} 
+            required 
+            className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-primary-500 outline-none" />
         </div>
 
         <div className="space-y-2">
@@ -268,10 +347,12 @@ export default function PlaceForm({ place, isEdit = false }: PlaceFormProps) {
               <>
                 <Image 
                   src={previewUrl} 
-                  alt="Preview" 
+                  alt="Xem trước hình ảnh địa điểm đang tải lên"
+                  title="Hình ảnh địa điểm"
                   fill 
                   className="object-cover" 
-                  unoptimized
+                  unoptimized={previewUrl.startsWith('blob:')}
+                  sizes="(max-width: 768px) 100vw, 50vw"
                 />
                 {isAdmin && (
                   <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
@@ -328,8 +409,81 @@ export default function PlaceForm({ place, isEdit = false }: PlaceFormProps) {
         </div>
 
         <div className="space-y-2 md:col-span-2">
+          <label className="text-sm font-medium text-gray-700">Thư viện ảnh (Gallery)</label>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {/* Existing Images */}
+            {existingGallery.map((url, index) => (
+              <div key={`existing-${index}`} className="relative aspect-square rounded-lg overflow-hidden group border border-gray-200">
+                <Image src={url} alt="Gallery" fill className="object-cover" unoptimized />
+                <button
+                  type="button"
+                  onClick={() => removeExistingGalleryImage(index)}
+                  className="absolute top-1 right-1 p-1.5 bg-white/90 text-red-600 rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
+
+            {/* New Images Previews */}
+            {newGalleryFiles.map((file, index) => (
+              <div key={`new-${index}`} className="relative aspect-square rounded-lg overflow-hidden group border border-primary-200 ring-2 ring-primary-100">
+                <Image src={URL.createObjectURL(file)} alt="New Gallery" fill className="object-cover" unoptimized />
+                <button
+                  type="button"
+                  onClick={() => removeNewGalleryImage(index)}
+                  className="absolute top-1 right-1 p-1.5 bg-white/90 text-red-600 rounded-full shadow-sm hover:bg-red-50"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+                <div className="absolute bottom-0 left-0 right-0 bg-primary-600 text-white text-[10px] py-0.5 text-center">
+                  Mới
+                </div>
+              </div>
+            ))}
+
+            {/* Add Button */}
+            <div 
+              onClick={() => isAdmin && galleryInputRef.current?.click()}
+              className={`aspect-square rounded-lg border-2 border-dashed flex flex-col items-center justify-center gap-2 transition-colors ${isAdmin ? 'border-gray-300 hover:border-primary-500 hover:bg-primary-50 cursor-pointer text-gray-500 hover:text-primary-600' : 'border-gray-200 bg-gray-50 cursor-not-allowed text-gray-300'}`}
+            >
+              <Plus className="w-8 h-8" />
+              <span className="text-xs font-medium">Thêm ảnh</span>
+            </div>
+          </div>
+          <input
+            ref={galleryInputRef}
+            type="file"
+            multiple
+            accept="image/*"
+            onChange={handleGalleryChange}
+            className="hidden"
+          />
+        </div>
+
+        <div className="space-y-2 md:col-span-2">
           <label className="text-sm font-medium text-gray-700">Mô tả chi tiết</label>
           <textarea name="description" defaultValue={place?.description} rows={5} className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-primary-500 outline-none" />
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-gray-700">Giờ mở cửa</label>
+          <input 
+            name="opening_hours" 
+            defaultValue={place?.opening_hours} 
+            placeholder="Ví dụ: Mở cửa cả ngày (Thời gian có thể thay đổi vào ngày lễ)"
+            className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-primary-500 outline-none" 
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-gray-700">Thời điểm lý tưởng</label>
+          <input 
+            name="best_time" 
+            defaultValue={place?.best_time} 
+            placeholder="Ví dụ: Quanh năm. Đẹp nhất vào mùa khô (Tháng 11 - Tháng 4)"
+            className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-primary-500 outline-none" 
+          />
         </div>
 
         <div className="space-y-2">

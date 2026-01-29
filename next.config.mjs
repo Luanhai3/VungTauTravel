@@ -8,7 +8,11 @@ const nextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'image.vietnam.travel',
+        hostname: 'cdn.pixabay.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'zvdfdsmblcxpnatolecs.supabase.co',
       },
     ],
   },

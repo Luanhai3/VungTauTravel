@@ -93,6 +93,8 @@ export default function Categories() {
 }
 
 function CategoryCard({ category }: { category: any }) {
+  const [isLoaded, setIsLoaded] = useState(false);
+
   return (
     <Link
       href={`/categories/${category.slug}`}
@@ -102,9 +104,15 @@ function CategoryCard({ category }: { category: any }) {
       <div className="absolute inset-0 overflow-hidden">
         <Image
           src={category.image}
-          alt={category.name}
+          alt={`Danh mục du lịch: ${category.name} - ${category.description}`}
+          title={`Khám phá ${category.name} tại Vũng Tàu`}
           fill
-          className="object-cover transition-transform duration-700 group-hover:scale-110"
+          className={`object-cover duration-700 group-hover:scale-110 transition-all ${
+            isLoaded ? "opacity-100" : "opacity-0"
+          }`}
+          onLoad={() => setIsLoaded(true)}
+          placeholder="blur"
+          blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mN8/+F9PQAI8wNPvd7POQAAAABJRU5ErkJggg=="
         />
       </div>
       

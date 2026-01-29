@@ -2,19 +2,51 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getUsers, deleteUser, User, getUserByUsername } from "@/lib/users";
 import { Plus, Trash2, User as UserIcon, ChevronLeft, ChevronRight, Search, ArrowUpDown, ArrowUp, ArrowDown, BarChart3, Download, Loader2 } from "lucide-react";
 import UserModal from "@/components/admin/UserModal";
 import { createClient } from "@/utils/supabase/client";
+import { deleteUser, updateUserRole } from "@/app/admin/users/actions";
+
+interface UserProfile {
+  id: string;
+  email: string;
+  role: string;
+  created_at: string;
+  // Các trường khác từ bảng profiles hoặc metadata
+}
+
+function TableSkeleton() {
+  return (
+    <div className="animate-pulse">
+      {[...Array(5)].map((_, i) => (
+        <div key={i} className="flex items-center justify-between py-4 px-6 border-b border-gray-100">
+          <div className="flex items-center gap-3 w-1/3">
+            <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
+            <div className="h-4 bg-gray-200 rounded w-32"></div>
+          </div>
+          <div className="h-4 bg-gray-200 rounded w-24"></div>
+          <div className="h-4 bg-gray-200 rounded w-20"></div>
+          <div className="h-8 w-8 bg-gray-200 rounded"></div>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default function UsersPage() {
-  const [users, setUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState<UserProfile[]>([]);
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [chartData, setChartData] = useState<{ label: string; value: number }[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortConfig, setSortConfig] = useState<{ key: keyof User; direction: "asc" | "desc" } | null>(null);
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+  const [sortConfig, setSortConfig] = useState<{ key: keyof UserProfile; direction: "asc" | "desc" } | null>(null);
   const itemsPerPage = 5;
   const [isLoading, setIsLoading] = useState(true);
+  const [isSearching, setIsSearching] = useState(false);
+  const [isAuthChecked, setIsAuthChecked] = useState(false);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
   const router = useRouter();
   const supabase = createClient();
 
@@ -25,25 +57,116 @@ export default function UsersPage() {
         router.push("/admin/login");
         return;
       }
-      if (user.email !== 'hoangthienluan17@gmail.com') {
-        router.push("/");
+      
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+      if (profile?.role !== 'admin' && user.email !== 'hoangthienluan17@gmail.com') {
+        router.push("/forbidden");
         return;
       }
+      setIsAuthChecked(true);
       setIsLoading(false);
-      loadUsers();
     };
     checkUser();
   }, []);
 
-  const loadUsers = () => {
-    setUsers(getUsers());
-  };
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsSearching(false);
+      setDebouncedSearchQuery(searchQuery);
+    }, 500);
 
-  const handleDelete = (id: string) => {
-    if (confirm("Bạn có chắc chắn muốn xóa người dùng này?")) {
-      deleteUser(id);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    if (isAuthChecked) {
       loadUsers();
     }
+  }, [isAuthChecked, currentPage, debouncedSearchQuery, sortConfig]);
+
+  useEffect(() => {
+    if (isAuthChecked) {
+      loadChartData();
+    }
+  }, [isAuthChecked]);
+
+  const loadUsers = async () => {
+    let query = supabase
+      .from('profiles')
+      .select('*', { count: 'exact' });
+
+    if (debouncedSearchQuery) {
+      query = query.ilike('email', `%${debouncedSearchQuery}%`);
+    }
+
+    if (sortConfig) {
+      query = query.order(sortConfig.key, { ascending: sortConfig.direction === 'asc' });
+    } else {
+      query = query.order('created_at', { ascending: false });
+    }
+
+    const from = (currentPage - 1) * itemsPerPage;
+    const to = from + itemsPerPage - 1;
+
+    const { data, count } = await query.range(from, to);
+
+    if (data) {
+      setUsers(data as UserProfile[]);
+      setTotalUsers(count || 0);
+    }
+  };
+
+  const loadChartData = async () => {
+    // Lấy dữ liệu created_at của tất cả user để vẽ biểu đồ
+    // (Chỉ lấy cột created_at để tối ưu hiệu suất)
+    const { data } = await supabase
+      .from('profiles')
+      .select('created_at');
+
+    if (data) {
+      const newChartData = Array.from({ length: 6 }, (_, i) => {
+        const d = new Date();
+        d.setMonth(d.getMonth() - (5 - i));
+        const month = d.getMonth();
+        const year = d.getFullYear();
+        
+        const count = data.filter((u: any) => {
+          const uDate = u.created_at ? new Date(u.created_at) : null;
+          return uDate && uDate.getMonth() === month && uDate.getFullYear() === year;
+        }).length;
+
+        return { label: `T${month + 1}`, value: count };
+      });
+      setChartData(newChartData);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (confirm("Bạn có chắc chắn muốn xóa người dùng này?")) {
+      const result = await deleteUser(id);
+      if (!result.success) {
+        alert(result.message);
+      } else {
+        alert("Xóa thành công");
+      }
+      loadUsers();
+      loadChartData();
+    }
+  };
+
+  const handleRoleChange = async (userId: string, newRole: string) => {
+    setUpdatingId(userId);
+    const result = await updateUserRole(userId, newRole);
+    if (!result.success) {
+      alert(result.message);
+    }
+    setUpdatingId(null);
+    loadUsers();
   };
 
   const handleModalClose = () => {
@@ -51,7 +174,7 @@ export default function UsersPage() {
     loadUsers();
   };
 
-  const handleSort = (key: keyof User) => {
+  const handleSort = (key: keyof UserProfile) => {
     let direction: "asc" | "desc" = "asc";
     if (sortConfig && sortConfig.key === key && sortConfig.direction === "asc") {
       direction = "desc";
@@ -59,37 +182,31 @@ export default function UsersPage() {
     setSortConfig({ key, direction });
   };
 
-  const filteredUsers = users.filter((user) =>
-    user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    user.username.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const handleExportCSV = async () => {
+    // Fetch toàn bộ dữ liệu theo filter hiện tại để export
+    let query = supabase.from('profiles').select('*');
 
-  const sortedUsers = [...filteredUsers].sort((a, b) => {
-    if (!sortConfig) return 0;
-    const { key, direction } = sortConfig;
-    
-    // @ts-ignore
-    let aValue = a[key] || "";
-    // @ts-ignore
-    let bValue = b[key] || "";
+    if (debouncedSearchQuery) {
+      query = query.ilike('email', `%${debouncedSearchQuery}%`);
+    }
 
-    if (typeof aValue === 'string') aValue = aValue.toLowerCase();
-    if (typeof bValue === 'string') bValue = bValue.toLowerCase();
+    if (sortConfig) {
+      query = query.order(sortConfig.key, { ascending: sortConfig.direction === 'asc' });
+    } else {
+      query = query.order('created_at', { ascending: false });
+    }
 
-    if (aValue < bValue) return direction === "asc" ? -1 : 1;
-    if (aValue > bValue) return direction === "asc" ? 1 : -1;
-    return 0;
-  });
+    const { data } = await query;
+    if (!data) return;
 
-  const handleExportCSV = () => {
-    const headers = ["ID", "Họ tên", "Tên đăng nhập", "Vai trò"];
+    const headers = ["ID", "Email", "Vai trò", "Ngày tạo"];
     const csvContent = [
       headers.join(","),
-      ...filteredUsers.map(user => [
+      ...data.map((user: any) => [
         user.id,
-        `"${user.name.replace(/"/g, '""')}"`, // Escape quotes
-        user.username,
-        user.role
+        user.email,
+        user.role,
+        user.created_at
       ].join(","))
     ].join("\n");
 
@@ -101,34 +218,9 @@ export default function UsersPage() {
     link.click();
   };
 
-  const totalPages = Math.ceil(sortedUsers.length / itemsPerPage);
+  const totalPages = Math.ceil(totalUsers / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const currentUsers = sortedUsers.slice(startIndex, startIndex + itemsPerPage);
-
-  // Dữ liệu biểu đồ (6 tháng gần nhất)
-  const chartData = Array.from({ length: 6 }, (_, i) => {
-    const d = new Date();
-    d.setMonth(d.getMonth() - (5 - i));
-    const month = d.getMonth();
-    const year = d.getFullYear();
-    
-    const count = users.filter(u => {
-      // @ts-ignore - Giả sử user có trường created_at
-      const uDate = u.created_at ? new Date(u.created_at) : null;
-      return uDate && uDate.getMonth() === month && uDate.getFullYear() === year;
-    }).length;
-
-    return { label: `T${month + 1}`, value: count };
-  });
   const maxChartValue = Math.max(...chartData.map(d => d.value), 5);
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
-      </div>
-    );
-  }
 
   return (
     <div>
@@ -205,12 +297,17 @@ export default function UsersPage() {
       </div>
 
       <div className="mb-6 relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+        {isSearching ? (
+          <Loader2 className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 animate-spin" />
+        ) : (
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+        )}
         <input
           type="text"
           placeholder="Tìm kiếm theo tên hoặc username..."
           value={searchQuery}
           onChange={(e) => {
+            setIsSearching(true);
             setSearchQuery(e.target.value);
             setCurrentPage(1);
           }}
@@ -224,20 +321,9 @@ export default function UsersPage() {
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
                 <th 
-                  className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors group select-none"
-                  onClick={() => handleSort('name')}
+                  className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider"
                 >
-                  <div className="flex items-center gap-1">
-                    Người dùng
-                    {sortConfig?.key === 'name' ? (
-                      sortConfig.direction === 'asc' ? <ArrowUp className="w-4 h-4 text-primary-600" /> : <ArrowDown className="w-4 h-4 text-primary-600" />
-                    ) : (
-                      <ArrowUpDown className="w-4 h-4 text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    )}
-                  </div>
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                  Tên đăng nhập
+                  Email
                 </th>
                 <th 
                   className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors group select-none"
@@ -252,61 +338,78 @@ export default function UsersPage() {
                     )}
                   </div>
                 </th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                  Ngày tạo
+                </th>
                 <th className="px-6 py-4 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">
                   Thao tác
                 </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {currentUsers.map((user) => (
-                <tr key={user.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-gray-100 rounded-full">
-                        <UserIcon className="w-5 h-5 text-gray-600" />
-                      </div>
-                      <span className="font-medium text-gray-900">{user.name}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-600">
-                    {user.username}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                        user.role === "admin"
-                          ? "bg-purple-100 text-purple-800"
-                          : "bg-blue-100 text-blue-800"
-                      }`}
-                    >
-                      {user.role === "admin" ? "Quản trị viên" : "Biên tập viên"}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button
-                      onClick={() => handleDelete(user.id)}
-                      className="text-red-600 hover:text-red-700 p-2 transition-colors"
-                      title="Xóa"
-                      disabled={user.username === "admin"} // Prevent deleting default admin
-                    >
-                      <Trash2 className={`w-4 h-4 ${user.username === "admin" ? "opacity-50 cursor-not-allowed" : ""}`} />
-                    </button>
-                  </td>
+              {isLoading ? (
+                <tr>
+                  <td colSpan={4} className="p-0"><TableSkeleton /></td>
                 </tr>
-              ))}
+              ) : (
+                users.map((user) => (
+                  <tr key={user.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-gray-100 rounded-full">
+                          <UserIcon className="w-5 h-5 text-gray-600" />
+                        </div>
+                        <span className="font-medium text-gray-900">{user.email}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-2">
+                        <select
+                          value={user.role}
+                          onChange={(e) => handleRoleChange(user.id, e.target.value)}
+                          disabled={updatingId === user.id || user.email === "hoangthienluan17@gmail.com"}
+                          className={`block p-2 text-xs border rounded-lg focus:ring-primary-500 focus:border-primary-500 cursor-pointer outline-none transition-colors ${
+                            user.role === 'admin' 
+                            ? 'bg-purple-50 border-purple-200 text-purple-800' 
+                            : 'bg-blue-50 border-blue-200 text-blue-800'
+                          } ${updatingId === user.id ? 'opacity-50 cursor-wait' : ''}`}
+                        >
+                          <option value="user">Người dùng</option>
+                          <option value="editor">Biên tập viên</option>
+                          <option value="admin">Quản trị viên</option>
+                        </select>
+                        {updatingId === user.id && <Loader2 className="w-4 h-4 animate-spin text-gray-400" />}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-gray-500 text-sm">
+                      {new Date(user.created_at).toLocaleDateString('vi-VN')}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <button
+                        onClick={() => handleDelete(user.id)}
+                        className="text-red-600 hover:text-red-700 p-2 transition-colors"
+                        title="Xóa"
+                        disabled={user.email === "hoangthienluan17@gmail.com"} // Prevent deleting default admin
+                      >
+                        <Trash2 className={`w-4 h-4 ${user.email === "hoangthienluan17@gmail.com" ? "opacity-50 cursor-not-allowed" : ""}`} />
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
 
         {/* Pagination Controls */}
-        {filteredUsers.length > 0 && (
+        {totalUsers > 0 && (
           <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100 bg-gray-50">
             <div className="text-sm text-gray-500">
               Hiển thị <span className="font-medium">{startIndex + 1}</span> đến{" "}
               <span className="font-medium">
-                {Math.min(startIndex + itemsPerPage, filteredUsers.length)}
+                {Math.min(startIndex + itemsPerPage, totalUsers)}
               </span>{" "}
-              trong số <span className="font-medium">{filteredUsers.length}</span> người dùng
+              trong số <span className="font-medium">{totalUsers}</span> người dùng
             </div>
             <div className="flex items-center gap-2">
               <button

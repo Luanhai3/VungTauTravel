@@ -61,7 +61,13 @@ export default function LoginPage() {
         setView('mfa');
       } else {
         // Nếu không có 2FA, đăng nhập thành công
-        if (data.user?.email === "hoangthienluan17@gmail.com") {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', data.user.id)
+          .single();
+
+        if (profile?.role === 'admin' || data.user?.email === "hoangthienluan17@gmail.com") {
           router.push("/admin");
         } else {
           router.push("/");
@@ -93,7 +99,13 @@ export default function LoginPage() {
         setError("Mã xác thực không đúng.");
       } else {
         const { data: { user } } = await supabase.auth.getUser();
-        if (user?.email === "hoangthienluan17@gmail.com") {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user?.id)
+          .single();
+
+        if (profile?.role === 'admin' || user?.email === "hoangthienluan17@gmail.com") {
           router.push("/admin");
         } else {
           router.push("/");
@@ -105,9 +117,28 @@ export default function LoginPage() {
         setError("Mật khẩu xác nhận không khớp");
         return;
         }
+      
+      // Sử dụng Supabase để đăng ký tài khoản thật
+      const { data, error } = await supabase.auth.signUp({
+        email: username, // Giả sử username là email
+        password: password,
+        options: {
+          data: {
+            full_name: name,
+          },
+        },
+      });
 
-      addUser({ username, password, name, role: "user", favorites: [] });
-      router.push("/");
+      if (error) {
+        setError("Lỗi đăng ký: " + error.message);
+        return;
+      }
+
+      if (data.user) {
+        // Sau khi đăng ký thành công, chuyển về màn hình login và thông báo người dùng kiểm tra email
+        setView('login');
+        setMessage("Đăng ký thành công! Vui lòng kiểm tra email để xác thực tài khoản trước khi đăng nhập.");
+      }
     }
   };
 

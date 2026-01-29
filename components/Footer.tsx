@@ -1,10 +1,40 @@
 "use client";
 
 import Link from "next/link";
-import { Facebook, Instagram, Mail, MapPin, Phone, ArrowRight } from "lucide-react";
+import { useState } from "react";
+import { Mail, MapPin, Phone, ArrowRight } from "lucide-react";
+import SocialLinks from "@/components/SocialLinks";
 import Particles from "@/components/Particles";
+import { createClient } from "@/utils/supabase/client";
 
 export default function Footer() {
+  const [email, setEmail] = useState("");
+  const [message, setMessage] = useState("");
+  const supabase = createClient();
+
+  const handleSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setMessage("");
+
+    if (!email) {
+      setMessage("Vui lòng nhập địa chỉ email.");
+      return;
+    }
+
+    const { error } = await supabase.from("subscribers").insert({ email });
+
+    if (error) {
+      if (error.code === '23505') { // Lỗi unique_violation (email đã tồn tại)
+        setMessage("Email này đã được đăng ký trước đó. Cảm ơn bạn!");
+      } else {
+        setMessage("Đã có lỗi xảy ra. Vui lòng thử lại.");
+      }
+    } else {
+      setMessage("Đăng ký thành công! Cảm ơn bạn đã quan tâm.");
+      setEmail("");
+    }
+  };
+
   return (
     <footer className="relative bg-gray-900 text-white pt-20 pb-10 overflow-hidden">
       {/* Animated Background */}
@@ -23,26 +53,7 @@ export default function Footer() {
             <p className="text-gray-400 text-sm leading-relaxed">
               Khám phá vẻ đẹp tiềm ẩn của thành phố biển. Nơi lưu giữ những khoảnh khắc đáng nhớ và trải nghiệm tuyệt vời nhất của bạn.
             </p>
-            <div className="flex gap-4">
-              <a
-                href="https://www.facebook.com/eouaen/?locale=vi_VN"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-10 h-10 flex items-center justify-center bg-gray-800 rounded-full hover:bg-blue-600 transition-all duration-300 group"
-                aria-label="Facebook"
-              >
-                <Facebook className="w-5 h-5 group-hover:scale-110 transition-transform" />
-              </a>
-              <a
-                href="https://www.instagram.com/luanhoanggggg/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-10 h-10 flex items-center justify-center bg-gray-800 rounded-full hover:bg-pink-600 transition-all duration-300 group"
-                aria-label="Instagram"
-              >
-                <Instagram className="w-5 h-5 group-hover:scale-110 transition-transform" />
-              </a>
-            </div>
+            <SocialLinks />
           </div>
 
           {/* Quick Links */}
@@ -95,10 +106,12 @@ export default function Footer() {
             <p className="text-gray-400 text-sm mb-4">
               Nhận thông tin mới nhất về các địa điểm du lịch và ưu đãi hấp dẫn.
             </p>
-            <form className="space-y-3" onSubmit={(e) => e.preventDefault()}>
+            <form className="space-y-3" onSubmit={handleSubscribe}>
               <input
                 type="email"
                 placeholder="Email của bạn"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 text-white placeholder-gray-500 transition-all backdrop-blur-sm"
               />
               <button
@@ -108,6 +121,9 @@ export default function Footer() {
                 Đăng ký ngay
               </button>
             </form>
+            {message && (
+              <p className="text-xs mt-3 text-green-400">{message}</p>
+            )}
           </div>
         </div>
 

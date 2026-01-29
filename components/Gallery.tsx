@@ -1,7 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { Instagram } from "lucide-react";
+import { Instagram } from "@/components/Icons";
+import { useState } from "react";
 
 export default function Gallery() {
   const images = [
@@ -41,14 +42,22 @@ export default function Gallery() {
 }
 
 function GalleryItem({ src, index }: { src: string; index: number }) {
+  const [isLoaded, setIsLoaded] = useState(false);
+
   return (
     <div className="relative group rounded-3xl overflow-hidden break-inside-avoid shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 cursor-pointer">
       <Image
         src={src}
-        alt={`Gallery image ${index + 1}`}
+        alt={`Khoảnh khắc du lịch Vũng Tàu đẹp #${index + 1}`}
+        title={`Ảnh đẹp Vũng Tàu ${index + 1}`}
         width={800}
         height={600}
-        className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-110"
+        className={`w-full h-auto object-cover duration-700 group-hover:scale-110 transition-all ${
+          isLoaded ? "opacity-100" : "opacity-0"
+        }`}
+        onLoad={() => setIsLoaded(true)}
+        placeholder="blur"
+        blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mN8/+F9PQAI8wNPvd7POQAAAABJRU5ErkJggg=="
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-6">
         <div className="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">

@@ -13,6 +13,7 @@ export default function About() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const textRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLDivElement>(null);
+  const [isImageLoaded, setIsImageLoaded] = useState(false);
 
   const fullText1 = "Chào mừng đến với";
   const fullText2 = "Vũng Tàu";
@@ -97,9 +98,16 @@ export default function About() {
             <div className="relative h-[600px] w-full rounded-2xl overflow-hidden shadow-2xl">
               <Image
                 src="https://images.unsplash.com/photo-1506953823976-52e1fdc0149a?q=80&w=1000"
-                alt="Vung Tau Coast"
+                alt="Bờ biển Vũng Tàu xinh đẹp với sóng xanh và cát trắng"
+                title="Vẻ đẹp thơ mộng của bờ biển Vũng Tàu"
                 fill
-                className="object-cover"
+                className={`object-cover transition-opacity duration-700 ${
+                  isImageLoaded ? "opacity-100" : "opacity-0"
+                }`}
+                onLoad={() => setIsImageLoaded(true)}
+                sizes="(max-width: 1024px) 100vw, 50vw"
+                placeholder="blur"
+                blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mN8/+F9PQAI8wNPvd7POQAAAABJRU5ErkJggg=="
               />
             </div>
             {/* Decorative element */}

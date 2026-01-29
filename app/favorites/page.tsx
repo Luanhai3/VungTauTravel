@@ -6,7 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { MapPin, ArrowUpRight, Heart } from "lucide-react";
 import Footer from "@/components/Footer";
-import { Place, getPlaceById } from "@/lib/data";
+import { Place } from "@/lib/data";
 import { createClient } from "@/utils/supabase/client";
 
 export default function FavoritesPage() {
@@ -29,10 +29,22 @@ export default function FavoritesPage() {
         .eq("user_id", user.id);
 
       if (data) {
-        const places = data
-          .map((item) => getPlaceById(item.place_id))
-          .filter((p): p is Place => p !== undefined);
-        setFavorites(places);
+        const placeIds = data.map((item) => item.place_id);
+        if (placeIds.length > 0) {
+          const { data: placesData } = await supabase
+            .from("places")
+            .select("*")
+            .in("id", placeIds);
+
+          if (placesData) {
+            const mappedPlaces: Place[] = placesData.map((p: any) => ({
+              ...p,
+              imageUrl: p.image_url,
+              googleMapsUrl: p.google_maps_url
+            }));
+            setFavorites(mappedPlaces);
+          }
+        }
       }
     };
 

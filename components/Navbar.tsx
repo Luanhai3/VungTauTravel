@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { Menu, X, Search, Heart, User } from "lucide-react";
 import Image from "next/image";
 import { createClient } from "@/utils/supabase/client";
@@ -15,6 +15,7 @@ interface NavbarProps {
 
 export default function Navbar({ initialUser, initialRole }: NavbarProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -67,9 +68,11 @@ export default function Navbar({ initialUser, initialRole }: NavbarProps) {
     }
   };
 
+  if (pathname?.startsWith("/admin") || pathname?.startsWith("/places/")) return null;
+
   return (
     <>
-      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${navClasses}`}>
+      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${navClasses}`} suppressHydrationWarning>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
             {/* Logo */}
@@ -213,7 +216,13 @@ export default function Navbar({ initialUser, initialRole }: NavbarProps) {
                 <div className="flex items-center gap-3">
                   <div className="relative w-8 h-8 rounded-full overflow-hidden bg-gray-100 border border-gray-200">
                     {user.user_metadata.avatar_url ? (
-                      <Image src={user.user_metadata.avatar_url} alt="Avatar" fill className="object-cover" />
+                      <Image 
+                        src={user.user_metadata.avatar_url} 
+                        alt={`Ảnh đại diện của ${user.user_metadata.full_name || "bạn"}`}
+                        title="Trang cá nhân"
+                        fill 
+                        className="object-cover" 
+                      />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-gray-400">
                         <User className="w-5 h-5" />

@@ -199,7 +199,8 @@ export default function CategoryPage() {
                 <div className="relative aspect-[4/5] w-full overflow-hidden rounded-xl mb-4 bg-gray-100">
                   <Image
                     src={imageError[place.id] ? "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800" : place.imageUrl}
-                    alt={place.name}
+                    alt={`Hình ảnh ${place.name} - ${place.category}`}
+                    title={`Xem chi tiết ${place.name}`}
                     fill
                     className="object-cover transition-transform duration-700 group-hover:scale-110"
                     onError={() => setImageError((prev) => ({ ...prev, [place.id]: true }))}

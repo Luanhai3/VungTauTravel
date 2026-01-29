@@ -10,6 +10,7 @@ import { createClient } from "@/utils/supabase/client";
 export default function FeaturedPlaces() {
   const [places, setPlaces] = useState<Place[]>([]);
   const [imageError, setImageError] = useState<Record<string, boolean>>({});
+  const [loadedImages, setLoadedImages] = useState<Record<string, boolean>>({});
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 6;
   const supabase = createClient();
@@ -69,10 +70,16 @@ export default function FeaturedPlaces() {
               <div className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl mb-6 bg-gray-100">
                 <Image
                   src={imageError[place.id] ? "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800" : place.imageUrl}
-                  alt={place.name}
+                  alt={`Hình ảnh địa điểm ${place.name} - ${place.category} tại Vũng Tàu`}
+                  title={`Khám phá ${place.name} - ${place.address}`}
                   fill
-                  className="object-cover transition-transform duration-700 group-hover:scale-110"
+                  className={`object-cover duration-700 group-hover:scale-110 transition-all ${
+                    loadedImages[place.id] ? "opacity-100" : "opacity-0"
+                  }`}
                   onError={() => setImageError((prev) => ({ ...prev, [place.id]: true }))}
+                  onLoad={() => setLoadedImages((prev) => ({ ...prev, [place.id]: true }))}
+                  placeholder="blur"
+                  blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mN8/+F9PQAI8wNPvd7POQAAAABJRU5ErkJggg=="
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 

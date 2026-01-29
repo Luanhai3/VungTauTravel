@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { Home, LayoutDashboard, MapPin, LogOut, Users, Settings, MessageSquare } from "lucide-react";
+import { Home, LayoutDashboard, MapPin, LogOut, Users, Settings, MessageSquare, Mail, Send } from "lucide-react";
 import { signOut } from "@/app/auth/actions";
 import { createClient } from "@/utils/supabase/client";
 import { useEffect, useState } from "react";
@@ -42,6 +42,8 @@ export default function AdminLayout({
         { href: "/admin/places", label: "Quản lý địa điểm", icon: MapPin },
         { href: "/admin/comments", label: "Quản lý bình luận", icon: MessageSquare },
         { href: "/admin/users", label: "Quản lý người dùng", icon: Users },
+        { href: "/admin/subscribers", label: "Người đăng ký", icon: Mail },
+        { href: "/admin/newsletter/list", label: "Newsletter", icon: Send },
         { href: "/admin/profile", label: "Tài khoản", icon: Settings },
       ]
     : [{ href: "/admin/profile", label: "Tài khoản", icon: Settings }];

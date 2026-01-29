@@ -1,226 +1,126 @@
-"use client";
+import { Metadata } from "next";
+import { createClient } from "@/utils/supabase/server";
+import PlaceDetailPage from "@/components/page";
+import { redirect } from "next/navigation";
 
-import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
-import Image from "next/image";
-import Link from "next/link";
-import { MapPin, ArrowLeft, ExternalLink, Star, Calendar, Info, Clock, Heart } from "lucide-react";
-import Footer from "@/components/Footer";
-import { Place } from "@/lib/data";
-import { toggleFavorite, getUserByUsername } from "@/lib/users";
-import { createClient } from "@/utils/supabase/client";
+type Props = {
+  params: { id: string };
+};
 
-export default function PlaceDetailPage() {
-  const params = useParams();
-  const id = params.id as string;
-  const [place, setPlace] = useState<Place | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [imageError, setImageError] = useState(false);
-  const [isFavorite, setIsFavorite] = useState(false);
-  const router = useRouter();
-  const supabase = createClient();
+const generateSlug = (str: string) => {
+  return str
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[đĐ]/g, "d")
+    .replace(/[^a-z0-9\s-]/g, "")
+    .trim()
+    .replace(/\s+/g, "-");
+};
 
-  useEffect(() => {
-    const fetchData = async () => {
-      if (id) {
-        const { data: placeData } = await supabase
-          .from('places')
-          .select('*')
-          .eq('id', id)
-          .single();
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const id = decodeURIComponent(params.id);
+  const supabase = await createClient();
+  
+  let { data: place } = await supabase
+    .from("places")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
 
-        if (placeData) {
-          setPlace({
-            id: placeData.id,
-            name: placeData.name,
-            category: placeData.category,
-            imageUrl: placeData.image_url,
-            description: placeData.description,
-            address: placeData.address,
-            googleMapsUrl: placeData.google_maps_url,
-            isFeatured: placeData.is_featured
-          });
-        }
-
-      // Check favorite status
-      const username = localStorage.getItem("current_user");
-      if (username) {
-        const user = getUserByUsername(username);
-        if (user && user.favorites?.includes(id)) {
-          setIsFavorite(true);
-        }
-      }
-      
-      setLoading(false);
-      }
-    };
-    fetchData();
-  }, [id, supabase]);
-
-  const handleToggleFavorite = () => {
-    const username = localStorage.getItem("current_user");
-    if (!username) {
-      router.push("/admin/login");
-      return;
-    }
-    const newState = toggleFavorite(username, id);
-    setIsFavorite(newState);
-  };
-
-  if (loading) {
-    return (
-      <main className="min-h-screen bg-white">
-        <div className="h-screen flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600"></div>
-        </div>
-      </main>
-    );
+  if (!place) {
+    const slugId = generateSlug(id);
+    const { data: placeSlug } = await supabase.from("places").select("*").eq("id", slugId).maybeSingle();
+    place = placeSlug;
   }
 
   if (!place) {
-    return (
-      <main className="min-h-screen bg-gray-50">
-        <div className="pt-32 pb-12 text-center px-4">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Không tìm thấy địa điểm</h1>
-          <p className="text-gray-600 mb-8">Địa điểm bạn đang tìm kiếm không tồn tại hoặc đã bị xóa.</p>
-          <Link 
-            href="/" 
-            className="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-full hover:bg-primary-700 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Quay về trang chủ
-          </Link>
-        </div>
-        <Footer />
-      </main>
-    );
+    return {
+      title: "Không tìm thấy địa điểm | Vũng Tàu Travel",
+      description: "Địa điểm không tồn tại hoặc đã bị xóa.",
+    };
   }
 
+  const title = `${place.name} - ${place.category} | Vũng Tàu Travel`;
+  const description = place.description?.slice(0, 160) || `Khám phá ${place.name} tại ${place.address}`;
+  const imageUrl = place.image_url || "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1200";
+  const keywords = [`Vũng Tàu`, `Du lịch Vũng Tàu`, place.category, place.name, `Địa điểm ${place.category}`, `Review ${place.name}`, `Check-in Vũng Tàu`];
+
+  return {
+    title,
+    description,
+    keywords: keywords.join(", "),
+    openGraph: {
+      title,
+      description,
+      url: `/places/${id}`,
+      siteName: "Vũng Tàu Travel",
+      images: [
+        {
+          url: imageUrl,
+          width: 1200,
+          height: 630,
+          alt: place.name,
+        },
+      ],
+      locale: "vi_VN",
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [imageUrl],
+    },
+  };
+}
+
+export default async function Page({ params }: Props) {
+  const id = decodeURIComponent(params.id);
+  const supabase = await createClient();
+  const slugId = generateSlug(id);
+  
+  let { data: place } = await supabase
+    .from("places")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+
+  // Nếu không tìm thấy bằng ID gốc, thử tìm bằng slug
+  if (!place) {
+    const { data: placeSlug } = await supabase.from("places").select("*").eq("id", slugId).maybeSingle();
+    place = placeSlug;
+    
+    // Nếu tìm thấy bằng slug, redirect 301 sang URL chuẩn
+    if (place) {
+      redirect(`/places/${slugId}`);
+    }
+  }
+
+  const jsonLd = place ? {
+    "@context": "https://schema.org",
+    "@type": "TouristAttraction",
+    name: place.name,
+    description: place.description,
+    image: place.image_url ? [place.image_url] : [],
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: place.address,
+      addressLocality: "Vũng Tàu",
+      addressRegion: "Bà Rịa - Vũng Tàu",
+      addressCountry: "VN",
+    },
+  } : null;
+
   return (
-    <main className="min-h-screen bg-white">
-      {/* Hero Image */}
-      <div className="relative h-[50vh] md:h-[60vh] w-full">
-        <Image
-          src={imageError ? "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1920" : place.imageUrl}
-          alt={place.name}
-          fill
-          className="object-cover"
-          priority
-          onError={() => setImageError(true)}
+    <>
+      {jsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-        
-        <div className="absolute bottom-0 left-0 right-0 p-6 md:p-12 max-w-7xl mx-auto">
-          <Link 
-            href="/" 
-            className="inline-flex items-center gap-2 text-white/80 hover:text-white mb-6 transition-colors backdrop-blur-sm bg-black/20 px-4 py-2 rounded-full"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Quay lại
-          </Link>
-          
-          <button
-            onClick={handleToggleFavorite}
-            className={`absolute top-6 right-6 p-3 rounded-full backdrop-blur-md transition-all ${isFavorite ? 'bg-white text-red-500' : 'bg-black/30 text-white hover:bg-white hover:text-red-500'}`}
-          >
-            <Heart className={`w-6 h-6 ${isFavorite ? 'fill-current' : ''}`} />
-          </button>
-          
-          <div className="flex flex-wrap items-center gap-4 mb-4">
-            <span className="px-4 py-1.5 bg-primary-600 text-white text-sm font-bold uppercase tracking-wider rounded-full">
-              {place.category}
-            </span>
-            {place.isFeatured && (
-              <span className="px-4 py-1.5 bg-yellow-500 text-white text-sm font-bold uppercase tracking-wider rounded-full flex items-center gap-1">
-                <Star className="w-4 h-4 fill-current" />
-                Nổi bật
-              </span>
-            )}
-          </div>
-          
-          <h1 className="text-4xl md:text-6xl font-black text-white mb-4 leading-tight">
-            {place.name}
-          </h1>
-          
-          <div className="flex items-center text-white/90 gap-2 text-lg">
-            <MapPin className="w-5 h-5 flex-shrink-0" />
-            <p>{place.address}</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-          {/* Main Info */}
-          <div className="lg:col-span-2 space-y-8">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                <Info className="w-6 h-6 text-primary-600" />
-                Giới thiệu
-              </h2>
-              <p className="text-gray-600 text-lg leading-relaxed whitespace-pre-line">
-                {place.description}
-              </p>
-            </div>
-
-            {/* Additional placeholder content */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-8 border-t border-gray-100">
-              <div className="bg-gray-50 p-6 rounded-xl">
-                <h3 className="font-bold text-gray-900 mb-2 flex items-center gap-2">
-                  <Clock className="w-5 h-5 text-primary-600" />
-                  Giờ mở cửa
-                </h3>
-                <p className="text-gray-600">
-                  Mở cửa cả ngày<br/>
-                  <span className="text-sm text-gray-500">(Thời gian có thể thay đổi vào ngày lễ)</span>
-                </p>
-              </div>
-              <div className="bg-gray-50 p-6 rounded-xl">
-                <h3 className="font-bold text-gray-900 mb-2 flex items-center gap-2">
-                  <Calendar className="w-5 h-5 text-primary-600" />
-                  Thời điểm lý tưởng
-                </h3>
-                <p className="text-gray-600">
-                  Quanh năm<br/>
-                  <span className="text-sm text-gray-500">Đẹp nhất vào mùa khô (Tháng 11 - Tháng 4)</span>
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Sidebar */}
-          <div className="space-y-8">
-            <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 sticky top-24">
-              <h3 className="text-xl font-bold text-gray-900 mb-6">Thông tin địa điểm</h3>
-              
-              <div className="space-y-6">
-                <div>
-                  <label className="text-sm font-medium text-gray-500 block mb-1">Địa chỉ</label>
-                  <p className="text-gray-900 font-medium">{place.address}</p>
-                </div>
-                
-                <div>
-                  <label className="text-sm font-medium text-gray-500 block mb-1">Danh mục</label>
-                  <p className="text-gray-900 font-medium">{place.category}</p>
-                </div>
-
-                <a
-                  href={place.googleMapsUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block w-full py-4 bg-primary-600 hover:bg-primary-700 text-white text-center font-bold rounded-xl transition-colors shadow-lg shadow-primary-600/20 flex items-center justify-center gap-2"
-                >
-                  Xem trên Google Maps
-                  <ExternalLink className="w-5 h-5" />
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <Footer />
-    </main>
+      )}
+      <PlaceDetailPage />
+    </>
   );
 }

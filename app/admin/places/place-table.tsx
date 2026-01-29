@@ -115,7 +115,14 @@ export default function PlaceTable({ places }: { places: any[] }) {
                 <td className="px-6 py-4">
                   <div className="relative w-16 h-12 rounded-lg overflow-hidden bg-gray-100">
                     {place.image_url && (
-                      <Image src={place.image_url} alt={place.name} fill className="object-cover" unoptimized />
+                      <Image 
+                        src={place.image_url} 
+                        alt={`Thumbnail ${place.name}`} 
+                        title={place.name}
+                        fill 
+                        className="object-cover" 
+                        unoptimized 
+                      />
                     )}
                   </div>
                 </td>

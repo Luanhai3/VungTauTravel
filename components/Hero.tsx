@@ -35,7 +35,7 @@ export default function Hero() {
           className="absolute top-0 left-0 w-full h-full object-cover"
           poster="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1920&q=80"
         >
-          <source src="https://cdn.pixabay.com/video/2020/05/25/40103-424930038_large.mp4" type="video/mp4" />
+          <source src="https://videos.pexels.com/video-files/854032/854032-hd_1920_1080_25fps.mp4" type="video/mp4" />
         </video>
         <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/20 to-black/60" />
       </div>

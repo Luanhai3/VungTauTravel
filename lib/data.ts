@@ -9,4 +9,12 @@ export interface Place {
   address: string;
   googleMapsUrl: string;
   isFeatured?: boolean;
+  openingHours?: string;
+  bestTime?: string;
+  galleryImages?: string[];
 }
+
+// Dummy function to prevent build error if imported somewhere
+export const getPlaceById = (id: string): Place | undefined => {
+  return undefined;
+};

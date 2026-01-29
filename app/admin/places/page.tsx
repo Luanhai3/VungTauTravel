@@ -9,7 +9,14 @@ export default async function PlacesPage() {
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) return redirect("/login");
-  if (user.email !== "hoangthienluan17@gmail.com") return redirect("/");
+  
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single();
+
+  if (profile?.role !== 'admin' && user.email !== "hoangthienluan17@gmail.com") return redirect("/forbidden");
 
   // Fetch places
   const { data: places, error } = await supabase

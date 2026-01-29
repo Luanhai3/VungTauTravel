@@ -4,27 +4,94 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { MapPin, ArrowLeft, ExternalLink, Star, Calendar, Info, Clock, Heart } from "lucide-react";
+import { MapPin, ArrowLeft, ExternalLink, Star, Calendar, Info, Clock, Heart, ChevronRight, Home, Share2, Copy, Check } from "lucide-react";
+import { Facebook } from "@/components/Icons";
 import Footer from "@/components/Footer";
-import { Place, getPlaceById } from "@/lib/data";
+import { Place } from "@/lib/data";
 import Comments from "@/components/Comments";
 import { createClient } from "@/utils/supabase/client";
 
+const generateSlug = (str: string) => {
+  return str
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[đĐ]/g, "d")
+    .replace(/[^a-z0-9\s-]/g, "")
+    .trim()
+    .replace(/\s+/g, "-");
+};
+
 export default function PlaceDetailPage() {
   const params = useParams();
-  const id = params.id as string;
+  const categorySlugMap: Record<string, string> = {
+    "Ăn uống": "an-uong",
+    "Hẹn hò": "hen-ho",
+    "Check-in": "check-in",
+    "Du lịch": "du-lich",
+    "Tham quan": "tham-quan",
+    "Di tích": "di-tich",
+    "Thiên nhiên": "thien-nhien",
+  };
+
+  const id = decodeURIComponent(params.id as string);
   const [place, setPlace] = useState<Place | null>(null);
   const [loading, setLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [isImageLoaded, setIsImageLoaded] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
+  const [averageRating, setAverageRating] = useState(0);
+  const [totalReviews, setTotalReviews] = useState(0);
   const router = useRouter();
   const supabase = createClient();
 
   useEffect(() => {
     const fetchData = async () => {
       if (id) {
-        const foundPlace = getPlaceById(id);
-        setPlace(foundPlace || null);
+        // Thử tìm bằng ID chính xác (có thể có dấu)
+        let { data: placeData } = await supabase
+          .from('places')
+          .select('*')
+          .eq('id', id)
+          .maybeSingle();
+
+        // Nếu không tìm thấy, thử tìm bằng slug không dấu (cho trường hợp URL cũ nhưng DB đã đổi mới)
+        if (!placeData) {
+          const slugId = generateSlug(id);
+          const { data: placeDataSlug } = await supabase.from('places').select('*').eq('id', slugId).maybeSingle();
+          placeData = placeDataSlug;
+        }
+
+        if (placeData) {
+          setPlace({
+            id: placeData.id,
+            name: placeData.name,
+            category: placeData.category,
+            imageUrl: placeData.image_url,
+            description: placeData.description,
+            address: placeData.address,
+            googleMapsUrl: placeData.google_maps_url,
+            isFeatured: placeData.is_featured,
+            openingHours: placeData.opening_hours,
+            bestTime: placeData.best_time,
+            galleryImages: placeData.gallery_images || []
+          });
+
+          // Lấy thông tin đánh giá
+          const { data: commentsData } = await supabase
+            .from("comments")
+            .select("rating")
+            .eq("place_id", placeData.id);
+            
+          if (commentsData && commentsData.length > 0) {
+            const sum = commentsData.reduce((acc, curr) => acc + (curr.rating || 0), 0);
+            setAverageRating(Number((sum / commentsData.length).toFixed(1)));
+            setTotalReviews(commentsData.length);
+          }
+        } else {
+          setPlace(null);
+        }
         
         // Check favorite status from Supabase
         const { data: { user } } = await supabase.auth.getUser();
@@ -75,6 +142,20 @@ export default function PlaceDetailPage() {
     }
   };
 
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(window.location.href);
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 2000);
+  };
+
+  const handleShareFacebook = () => {
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`, '_blank');
+  };
+
+  const handleShareZalo = () => {
+     window.open(`https://zalo.me/share/?url=${encodeURIComponent(window.location.href)}`, '_blank');
+  };
+
   if (loading) {
     return (
       <main className="min-h-screen bg-white">
@@ -106,15 +187,73 @@ export default function PlaceDetailPage() {
 
   return (
     <main className="min-h-screen bg-white">
+      {/* Breadcrumb */}
+      <div className="bg-gray-50 border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+          <nav className="flex items-center text-sm text-gray-500">
+            <Link href="/" className="hover:text-primary-600 flex items-center gap-1 transition-colors">
+              <Home className="w-4 h-4" />
+              Trang chủ
+            </Link>
+            <ChevronRight className="w-4 h-4 mx-2 text-gray-400" />
+            <Link 
+              href={`/categories/${categorySlugMap[place.category] || 'du-lich'}`} 
+              className="hover:text-primary-600 transition-colors"
+            >
+              {place.category}
+            </Link>
+            <ChevronRight className="w-4 h-4 mx-2 text-gray-400" />
+            <span className="text-gray-900 font-medium truncate max-w-[200px] sm:max-w-xs">
+              {place.name}
+            </span>
+          </nav>
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "BreadcrumbList",
+                "itemListElement": [
+                  {
+                    "@type": "ListItem",
+                    "position": 1,
+                    "name": "Trang chủ",
+                    "item": "https://vungtautravel.com"
+                  },
+                  {
+                    "@type": "ListItem",
+                    "position": 2,
+                    "name": place.category,
+                    "item": `https://vungtautravel.com/categories/${categorySlugMap[place.category] || 'du-lich'}`
+                  },
+                  {
+                    "@type": "ListItem",
+                    "position": 3,
+                    "name": place.name,
+                    "item": `https://vungtautravel.com/places/${place.id}`
+                  }
+                ]
+              })
+            }}
+          />
+        </div>
+      </div>
+
       {/* Hero Image */}
       <div className="relative h-[50vh] md:h-[60vh] w-full">
         <Image
           src={imageError ? "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1920" : place.imageUrl}
-          alt={place.name}
+          alt={`Toàn cảnh ${place.name} - Địa điểm ${place.category} nổi tiếng tại Vũng Tàu`}
+          title={`${place.name} - ${place.address}`}
           fill
-          className="object-cover"
+          className={`object-cover transition-opacity duration-700 ${
+            isImageLoaded ? "opacity-100" : "opacity-0"
+          }`}
           priority
           onError={() => setImageError(true)}
+          onLoad={() => setIsImageLoaded(true)}
+          placeholder="blur"
+          blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mN8/+F9PQAI8wNPvd7POQAAAABJRU5ErkJggg=="
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
         
@@ -149,6 +288,16 @@ export default function PlaceDetailPage() {
           <h1 className="text-4xl md:text-6xl font-black text-white mb-4 leading-tight">
             {place.name}
           </h1>
+
+          {totalReviews > 0 && (
+            <div className="flex items-center gap-2 mb-4 text-white/90">
+              <div className="flex items-center gap-1 bg-white/20 backdrop-blur-md px-3 py-1 rounded-full">
+                <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                <span className="font-bold text-white">{averageRating}</span>
+              </div>
+              <span className="text-sm">({totalReviews} đánh giá)</span>
+            </div>
+          )}
           
           <div className="flex items-center text-white/90 gap-2 text-lg">
             <MapPin className="w-5 h-5 flex-shrink-0" />
@@ -180,8 +329,8 @@ export default function PlaceDetailPage() {
                   Giờ mở cửa
                 </h3>
                 <p className="text-gray-600">
-                  Mở cửa cả ngày<br/>
-                  <span className="text-sm text-gray-500">(Thời gian có thể thay đổi vào ngày lễ)</span>
+                  {place.openingHours || "Đang cập nhật"}<br/>
+                  {/* <span className="text-sm text-gray-500">(Thời gian có thể thay đổi vào ngày lễ)</span> */}
                 </p>
               </div>
               <div className="bg-gray-50 p-6 rounded-xl">
@@ -190,11 +339,31 @@ export default function PlaceDetailPage() {
                   Thời điểm lý tưởng
                 </h3>
                 <p className="text-gray-600">
-                  Quanh năm<br/>
-                  <span className="text-sm text-gray-500">Đẹp nhất vào mùa khô (Tháng 11 - Tháng 4)</span>
+                  {place.bestTime || "Đang cập nhật"}<br/>
+                  {/* <span className="text-sm text-gray-500">Đẹp nhất vào mùa khô (Tháng 11 - Tháng 4)</span> */}
                 </p>
               </div>
             </div>
+
+            {/* Gallery Section */}
+            {place.galleryImages && place.galleryImages.length > 0 && (
+              <div className="pt-8 border-t border-gray-100">
+                <h2 className="text-2xl font-bold text-gray-900 mb-6">Thư viện ảnh</h2>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {place.galleryImages.map((img, idx) => (
+                    <div key={idx} className="relative aspect-[4/3] rounded-xl overflow-hidden cursor-pointer hover:opacity-90 transition-opacity shadow-sm">
+                      <Image 
+                        src={img} 
+                        alt={`${place.name} - Ảnh ${idx + 1}`} 
+                        fill 
+                        className="object-cover" 
+                        sizes="(max-width: 768px) 50vw, 33vw"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Comments Section */}
             <Comments placeId={id} />
@@ -225,6 +394,37 @@ export default function PlaceDetailPage() {
                   Xem trên Google Maps
                   <ExternalLink className="w-5 h-5" />
                 </a>
+              </div>
+            </div>
+
+            {/* Share Section */}
+            <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100">
+              <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <Share2 className="w-5 h-5 text-primary-600" />
+                Chia sẻ địa điểm
+              </h3>
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={handleShareFacebook}
+                  className="flex items-center justify-center gap-2 w-full py-3 bg-[#1877F2] text-white font-bold rounded-xl hover:bg-[#1864D9] transition-colors shadow-sm"
+                >
+                  <Facebook className="w-5 h-5" />
+                  Facebook
+                </button>
+                <button
+                  onClick={handleShareZalo}
+                  className="flex items-center justify-center gap-2 w-full py-3 bg-[#0068FF] text-white font-bold rounded-xl hover:bg-[#0054CC] transition-colors shadow-sm"
+                >
+                  <div className="w-5 h-5 flex items-center justify-center font-black bg-white text-[#0068FF] rounded-full text-xs">Z</div>
+                  Zalo
+                </button>
+                <button
+                  onClick={handleCopyLink}
+                  className="flex items-center justify-center gap-2 w-full py-3 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition-colors"
+                >
+                  {isCopied ? <Check className="w-5 h-5 text-green-600" /> : <Copy className="w-5 h-5" />}
+                  {isCopied ? "Đã sao chép" : "Sao chép liên kết"}
+                </button>
               </div>
             </div>
           </div>

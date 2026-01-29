@@ -16,8 +16,20 @@ interface PlaceModalProps {
 
 const categories: Category[] = ["Ăn uống", "Hẹn hò", "Check-in", "Du lịch"];
 
+const generateSlug = (str: string) => {
+  return str
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[đĐ]/g, "d")
+    .replace(/[^a-z0-9\s-]/g, "")
+    .trim()
+    .replace(/\s+/g, "-");
+};
+
 export default function PlaceModal({ place, onClose, onSave }: PlaceModalProps) {
   const [formData, setFormData] = useState({
+    id: "",
     name: "",
     category: "Ăn uống" as Category,
     imageUrl: "",
@@ -25,6 +37,8 @@ export default function PlaceModal({ place, onClose, onSave }: PlaceModalProps) 
     address: "",
     googleMapsUrl: "",
     isFeatured: false,
+    openingHours: "",
+    bestTime: "",
   });
   const [previewUrl, setPreviewUrl] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -45,6 +59,13 @@ export default function PlaceModal({ place, onClose, onSave }: PlaceModalProps) 
       if (user) {
         if (user.email === 'hoangthienluan17@gmail.com') {
           setIsAdmin(true);
+        } else {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single();
+          if (profile?.role === 'admin') setIsAdmin(true);
         }
       }
     };
@@ -54,6 +75,7 @@ export default function PlaceModal({ place, onClose, onSave }: PlaceModalProps) 
   useEffect(() => {
     if (place) {
       setFormData({
+        id: place.id,
         name: place.name,
         category: place.category,
         imageUrl: place.imageUrl,
@@ -61,6 +83,8 @@ export default function PlaceModal({ place, onClose, onSave }: PlaceModalProps) 
         address: place.address,
         googleMapsUrl: place.googleMapsUrl,
         isFeatured: place.isFeatured || false,
+        openingHours: place.openingHours || "",
+        bestTime: place.bestTime || "",
       });
       setPreviewUrl(place.imageUrl);
     }
@@ -70,7 +94,13 @@ export default function PlaceModal({ place, onClose, onSave }: PlaceModalProps) 
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => {
+      const newData = { ...prev, [name]: value };
+      if (name === "name" && !place) {
+        newData.id = generateSlug(value);
+      }
+      return newData;
+    });
   };
 
   const onCropComplete = (croppedArea: Area, croppedAreaPixels: Area) => {
@@ -178,13 +208,16 @@ export default function PlaceModal({ place, onClose, onSave }: PlaceModalProps) 
     }
 
     const dataToSave = {
+      id: formData.id || generateSlug(formData.name),
       name: formData.name,
       category: formData.category,
       image_url: finalImageUrl,
       description: formData.description,
       address: formData.address,
       google_maps_url: formData.googleMapsUrl,
-      is_featured: formData.isFeatured
+      is_featured: formData.isFeatured,
+      opening_hours: formData.openingHours,
+      best_time: formData.bestTime,
     };
 
     if (place) {
@@ -199,7 +232,7 @@ export default function PlaceModal({ place, onClose, onSave }: PlaceModalProps) 
     } else {
       const { error } = await supabase
         .from('places')
-        .insert([{ ...dataToSave, id: Date.now().toString() }]); // Tạm thời dùng timestamp làm ID nếu không có input ID
+        .insert([dataToSave]);
       if (error) {
         alert("Lỗi thêm mới: " + error.message);
         return;
@@ -240,10 +273,12 @@ export default function PlaceModal({ place, onClose, onSave }: PlaceModalProps) 
                 <>
                   <Image 
                     src={previewUrl} 
-                    alt="Preview" 
+                    alt="Xem trước hình ảnh địa điểm"
+                    title="Hình ảnh địa điểm"
                     fill 
                     className="object-cover" 
-                    unoptimized
+                    unoptimized={previewUrl.startsWith('blob:')}
+                    sizes="(max-width: 768px) 100vw, 600px"
                   />
                   {isAdmin && (
                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
@@ -307,6 +342,18 @@ export default function PlaceModal({ place, onClose, onSave }: PlaceModalProps) 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-700">
+                ID (Slug)
+              </label>
+              <input
+                name="id"
+                value={formData.id}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none bg-gray-50"
+                placeholder="tu-dong-tao-tu-ten"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
                 Tên địa điểm
               </label>
               <input
@@ -351,6 +398,33 @@ export default function PlaceModal({ place, onClose, onSave }: PlaceModalProps) 
               placeholder="Mô tả ngắn về địa điểm..."
               required
             />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Giờ mở cửa
+              </label>
+              <input
+                name="openingHours"
+                value={formData.openingHours}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+                placeholder="Ví dụ: 8:00 - 22:00"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Thời điểm lý tưởng
+              </label>
+              <input
+                name="bestTime"
+                value={formData.bestTime}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+                placeholder="Ví dụ: Mùa khô"
+              />
+            </div>
           </div>
 
           <div className="space-y-2">

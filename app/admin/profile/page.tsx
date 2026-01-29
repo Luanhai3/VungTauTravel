@@ -3,10 +3,11 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Place } from "@/lib/data";
-import { Lock, Save, User as UserIcon, Camera, Heart, MapPin, ShieldCheck, QrCode } from "lucide-react";
+import { Lock, Save, User as UserIcon, Camera, Heart, MapPin, ShieldCheck, QrCode, Edit2, Check, X, ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/client";
+import { updateUserName } from "@/app/admin/users/actions";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -23,7 +24,13 @@ export default function ProfilePage() {
   const [factorId, setFactorId] = useState("");
   const [verifyCode, setVerifyCode] = useState("");
   const [isDragging, setIsDragging] = useState(false);
+  const [loadedImages, setLoadedImages] = useState<Record<string, boolean>>({});
+  const [avatarLoaded, setAvatarLoaded] = useState(false);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [newName, setNewName] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 6;
   const supabase = createClient();
 
   useEffect(() => {
@@ -48,17 +55,23 @@ export default function ProfilePage() {
         name: authUser.user_metadata.full_name || authUser.email?.split('@')[0],
         avatarUrl: authUser.user_metadata.avatar_url,
         role: profile?.role || 'user',
-        favorites: profile?.favorites || []
       };
       
       setUser(userData);
+      setNewName(userData.name);
 
       // Lấy danh sách địa điểm yêu thích
-      if (userData.favorites.length > 0) {
+      const { data: favoritesData } = await supabase
+        .from('favorites')
+        .select('place_id')
+        .eq('user_id', authUser.id);
+
+      if (favoritesData && favoritesData.length > 0) {
+        const placeIds = favoritesData.map((f: any) => f.place_id);
         const { data: placesData } = await supabase
           .from('places')
           .select('*')
-          .in('id', userData.favorites);
+          .in('id', placeIds);
           
         if (placesData) {
           setFavoritePlaces(placesData.map((p: any) => ({
@@ -172,6 +185,18 @@ export default function ProfilePage() {
     setMessage({ type: "success", text: "Đổi mật khẩu thành công" });
   };
 
+  const handleNameUpdate = async () => {
+    if (!newName.trim() || newName === user.name) {
+      setIsEditingName(false);
+      return;
+    }
+    const result = await updateUserName(newName);
+    if (result.success) {
+      setUser({ ...user, name: newName });
+    }
+    setIsEditingName(false);
+  };
+
   const handleEnroll2FA = async () => {
     setMessage({ type: "", text: "" });
     const { data, error } = await supabase.auth.mfa.enroll({
@@ -224,6 +249,27 @@ export default function ProfilePage() {
     }
   };
 
+  const handleRemoveFavorite = async (e: React.MouseEvent, placeId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!user) return;
+
+    const { error } = await supabase
+      .from('favorites')
+      .delete()
+      .eq('user_id', user.id)
+      .eq('place_id', placeId);
+
+    if (!error) {
+      setFavoritePlaces(prev => prev.filter(p => p.id !== placeId));
+    }
+  };
+
+  const totalPages = Math.ceil(favoritePlaces.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const currentFavorites = favoritePlaces.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
   if (!user) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -252,10 +298,15 @@ export default function ProfilePage() {
                 {user.avatarUrl ? (
                   <Image 
                     src={user.avatarUrl} 
-                    alt={user.name} 
+                    alt={`Ảnh đại diện của ${user.name}`}
+                    title="Nhấn để thay đổi ảnh đại diện"
                     fill 
-                    className="object-cover" 
+                    className={`object-cover transition-opacity duration-300 ${
+                      avatarLoaded ? "opacity-100" : "opacity-0"
+                    }`}
+                    onLoad={() => setAvatarLoaded(true)}
                     unoptimized
+                    sizes="64px"
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-gray-400">
@@ -275,8 +326,27 @@ export default function ProfilePage() {
               />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-900">{user.name}</h2>
-              <p className="text-gray-500">{user.email} • {user.role === 'admin' ? 'Quản trị viên' : 'Người dùng'}</p>
+              {isEditingName ? (
+                <div className="flex items-center gap-2">
+                  <input 
+                    type="text"
+                    value={newName}
+                    onChange={(e) => setNewName(e.target.value)}
+                    className="px-2 py-1 border-b-2 border-primary-500 bg-transparent focus:outline-none text-xl font-bold text-gray-900"
+                    autoFocus
+                  />
+                  <button onClick={handleNameUpdate} className="p-1.5 text-green-600 hover:bg-green-100 rounded-full"><Check className="w-4 h-4" /></button>
+                  <button onClick={() => setIsEditingName(false)} className="p-1.5 text-red-600 hover:bg-red-100 rounded-full"><X className="w-4 h-4" /></button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <h2 className="text-xl font-bold text-gray-900">{user.name}</h2>
+                  <button onClick={() => setIsEditingName(true)} className="p-1.5 text-gray-400 hover:bg-gray-100 rounded-full">
+                    <Edit2 className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+              <p className="text-gray-500 mt-1">{user.email} • {user.role === 'admin' ? 'Quản trị viên' : 'Người dùng'}</p>
             </div>
           </div>
         </div>
@@ -426,21 +496,33 @@ export default function ProfilePage() {
         </div>
         <div className="p-6">
           {favoritePlaces.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {favoritePlaces
-                .map((place: any) => (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {currentFavorites.map((place: any) => (
                   <Link
                     href={`/places/${place.id}`}
                     key={place.id}
                     className="flex gap-4 p-3 rounded-lg border border-gray-100 hover:border-primary-200 hover:bg-primary-50 transition-all group"
                   >
+                    <button 
+                      onClick={(e) => handleRemoveFavorite(e, place.id)}
+                      className="absolute top-2 right-2 p-1.5 bg-white/80 text-red-500 rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50 z-10"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
                     <div className="relative w-20 h-20 rounded-lg overflow-hidden flex-shrink-0">
                       <Image
                         src={place.imageUrl}
-                        alt={place.name}
+                        alt={`Địa điểm yêu thích: ${place.name}`}
+                        title={place.name}
                         fill
-                        className="object-cover group-hover:scale-110 transition-transform duration-300"
-                        unoptimized
+                        className={`object-cover group-hover:scale-110 transition-all duration-300 ${
+                          loadedImages[place.id] ? "opacity-100" : "opacity-0"
+                        }`}
+                        onLoad={() => setLoadedImages(prev => ({ ...prev, [place.id]: true }))}
+                        sizes="80px"
+                        placeholder="blur"
+                        blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mN8/+F9PQAI8wNPvd7POQAAAABJRU5ErkJggg=="
                       />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -457,7 +539,33 @@ export default function ProfilePage() {
                     </div>
                   </Link>
                 ))}
-            </div>
+              </div>
+
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="flex justify-center items-center gap-4 mt-6 pt-4 border-t border-gray-100">
+                  <button
+                    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                    className="p-2 rounded-full border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <ChevronLeft className="w-5 h-5 text-gray-600" />
+                  </button>
+                  
+                  <span className="text-sm font-medium text-gray-600">
+                    Trang {currentPage} / {totalPages}
+                  </span>
+
+                  <button
+                    onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                    className="p-2 rounded-full border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <ChevronRight className="w-5 h-5 text-gray-600" />
+                  </button>
+                </div>
+              )}
+            </>
           ) : (
             <div className="text-center py-8 text-gray-500">
               Bạn chưa lưu địa điểm yêu thích nào.

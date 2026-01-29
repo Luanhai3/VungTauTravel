@@ -137,9 +137,11 @@ export default function UserModal({ onClose, onSave }: UserModalProps) {
                 {previewUrl ? (
                   <Image 
                     src={previewUrl} 
-                    alt="Avatar Preview" 
+                    alt="Xem trước ảnh đại diện người dùng mới"
+                    title="Ảnh đại diện"
                     fill 
                     className="object-cover" 
+                    sizes="96px"
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-gray-400">
