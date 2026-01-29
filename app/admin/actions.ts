@@ -3,6 +3,9 @@
 import { createClient } from "@/utils/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
+import { Resend } from "resend";
+import { render } from "@react-email/render";
+import { NotificationEmail } from "../../components/emails/NotificationEmail";
 
 async function verifyAdmin() {
   const supabase = await createClient();
@@ -180,11 +183,7 @@ export async function sendQuickEmail(email: string, subject: string, content: st
     return { success: false, message: "Chưa cấu hình Resend API Key." };
   }
 
-  const { Resend } = await import('resend');
   const resend = new Resend(process.env.RESEND_API_KEY);
-
-  const { render } = await import("@react-email/render");
-  const { NotificationEmail } = await import("../../components/emails/NotificationEmail");
 
   const emailHtml = await render(
     NotificationEmail({ subject, content })
@@ -226,11 +225,7 @@ export async function sendNewsletter(subject: string, content: string) {
 
   const emails = subscribers.map(s => s.email);
 
-  const { Resend } = await import('resend');
   const resend = new Resend(process.env.RESEND_API_KEY);
-
-  const { render } = await import("@react-email/render");
-  const { NotificationEmail } = await import("../../components/emails/NotificationEmail");
   const emailHtml = await render(NotificationEmail({ subject, content }));
 
   try {
@@ -310,11 +305,7 @@ export async function resendNewsletter(newsletterId: string) {
   const emails = subscribers.map(s => s.email);
 
   // Gửi email
-  const { Resend } = await import('resend');
   const resend = new Resend(process.env.RESEND_API_KEY);
-
-  const { render } = await import("@react-email/render");
-  const { NotificationEmail } = await import("../../components/emails/NotificationEmail");
   const emailHtml = await render(NotificationEmail(newsletter));
 
   const emailBatches = emails.map(email => ({
