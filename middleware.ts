@@ -1,15 +1,12 @@
-import { type NextRequest } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { updateSession } from '@/utils/supabase/middleware'
 
-export async function middleware(request: NextRequest) {
+export function middleware(request: NextRequest) {
   return updateSession(request)
 }
 
 export const config = {
   matcher: [
-    /*
-     * Chỉ chạy middleware trên các route admin để xử lý auth/session
-     */
     '/admin/:path*',
   ],
 }
