@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { signup } from "@/app/auth/actions";
 import { SubmitButton } from "./submit-button";
