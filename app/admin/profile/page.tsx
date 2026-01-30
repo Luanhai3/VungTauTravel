@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Place } from "@/lib/data";
-import { Lock, Save, User as UserIcon, Camera, Heart, MapPin, ShieldCheck, QrCode, Edit2, Check, X, ChevronLeft, ChevronRight, Download, LogOut } from "lucide-react";
+import { Lock, Save, User as UserIcon, Camera, Heart, MapPin, ShieldCheck, QrCode, Edit2, Check, X, ChevronLeft, ChevronRight, Download, LogOut, Sparkles } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/client";
@@ -308,6 +308,39 @@ export default function ProfilePage() {
     router.refresh();
   };
 
+  const handleOptimizeAccount = async () => {
+    if (!confirm("Hành động này sẽ xóa các dữ liệu thừa trong Session để giúp trang web tải nhanh hơn. Bạn có muốn tiếp tục?")) return;
+    
+    setMessage({ type: "", text: "Đang tối ưu hóa dữ liệu..." });
+    
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
+    if (!currentUser || !currentUser.user_metadata) return;
+
+    // Danh sách các trường được phép giữ lại
+    const allowedKeys = ['full_name', 'name', 'avatar_url', 'email', 'email_verified', 'phone_verified', 'iss', 'sub'];
+    const currentMeta = currentUser.user_metadata;
+    const dataToUpdate: any = {};
+
+    // Tìm các trường rác và set null để xóa chúng
+    Object.keys(currentMeta).forEach(key => {
+      if (!allowedKeys.includes(key)) {
+        dataToUpdate[key] = null;
+      }
+    });
+
+    if (Object.keys(dataToUpdate).length > 0) {
+      const { error } = await supabase.auth.updateUser({ data: dataToUpdate });
+      if (error) {
+        setMessage({ type: "error", text: "Lỗi tối ưu hóa: " + error.message });
+      } else {
+        setMessage({ type: "success", text: "Đã dọn dẹp dữ liệu thừa thành công! Vui lòng đăng nhập lại." });
+        setTimeout(() => handleLogout(), 2000);
+      }
+    } else {
+      setMessage({ type: "success", text: "Tài khoản của bạn đã được tối ưu, không cần dọn dẹp thêm." });
+    }
+  };
+
   const totalPages = Math.ceil(favoritePlaces.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const currentFavorites = favoritePlaces.slice(startIndex, startIndex + ITEMS_PER_PAGE);
@@ -324,6 +357,15 @@ export default function ProfilePage() {
     <div className="max-w-2xl mx-auto">
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Thông tin tài khoản</h1>
+        <div className="flex gap-2">
+        <button
+          onClick={handleOptimizeAccount}
+          className="flex items-center gap-2 px-4 py-2 bg-teal-50 border border-teal-200 hover:bg-teal-100 text-teal-700 rounded-lg transition-colors font-medium shadow-sm"
+          title="Giảm kích thước Session Cookie"
+        >
+          <Sparkles className="w-4 h-4" />
+          Tối ưu
+        </button>
         <button
           onClick={handleLogout}
           className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-lg transition-colors font-medium shadow-sm"
@@ -331,6 +373,7 @@ export default function ProfilePage() {
           <LogOut className="w-4 h-4" />
           Đăng xuất
         </button>
+        </div>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">

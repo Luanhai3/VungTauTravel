@@ -2,7 +2,11 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function updateSession(request: NextRequest) {
-  const response = NextResponse.next()
+  let response = NextResponse.next({
+    request: {
+      headers: request.headers,
+    },
+  })
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -12,8 +16,19 @@ export async function updateSession(request: NextRequest) {
         getAll() {
           return request.cookies.getAll()
         },
-        setAll(cookies) {
-          cookies.forEach(({ name, value, options }) => {
+        setAll(cookiesToSet) {
+          // 1. Cập nhật cookie vào request để Server Components phía sau nhận được session mới (đã gộp hoặc chia nhỏ)
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
+          
+          // 2. Tạo lại response để đồng bộ với request mới
+          response = NextResponse.next({
+            request: {
+              headers: request.headers,
+            },
+          })
+          
+          // 3. Set cookie vào response để gửi về trình duyệt
+          cookiesToSet.forEach(({ name, value, options }) => {
             response.cookies.set(name, value, options)
           })
         },
