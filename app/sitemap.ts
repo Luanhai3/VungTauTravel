@@ -3,7 +3,7 @@ import { createClient } from "@/utils/supabase/server";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const supabase = await createClient();
-  const baseUrl = "https://vungtautravel.com"; // Thay bằng domain thật của bạn
+  const baseUrl = "https://vung-tau-travel.vercel.app";
 
   // 1. Các trang tĩnh
   const staticRoutes = [
@@ -41,4 +41,3 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   return [...staticRoutes, ...dynamicRoutes];
 }
-

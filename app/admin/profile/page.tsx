@@ -3,11 +3,14 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Place } from "@/lib/data";
-import { Lock, Save, User as UserIcon, Camera, Heart, MapPin, ShieldCheck, QrCode, Edit2, Check, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { Lock, Save, User as UserIcon, Camera, Heart, MapPin, ShieldCheck, QrCode, Edit2, Check, X, ChevronLeft, ChevronRight, Download } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/client";
 import { updateUserName } from "@/app/admin/users/actions";
+import { QRCodeCanvas as QRCodeCanvasBase } from "qrcode.react";
+
+const QRCodeCanvas = QRCodeCanvasBase as any;
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -20,7 +23,7 @@ export default function ProfilePage() {
   });
   const [message, setMessage] = useState({ type: "", text: "" });
   const [isEnrolling2FA, setIsEnrolling2FA] = useState(false);
-  const [qrCodeUrl, setQrCodeUrl] = useState("");
+  const [totpUri, setTotpUri] = useState("");
   const [factorId, setFactorId] = useState("");
   const [verifyCode, setVerifyCode] = useState("");
   const [isDragging, setIsDragging] = useState(false);
@@ -209,8 +212,8 @@ export default function ProfilePage() {
     }
 
     setFactorId(data.id);
-    // Sử dụng API tạo QR code đơn giản để hiển thị
-    setQrCodeUrl(`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${data.totp.uri}`);
+    // Lưu URI để tạo QR code client-side
+    setTotpUri(data.totp.uri);
     setIsEnrolling2FA(true);
   };
 
@@ -246,6 +249,20 @@ export default function ProfilePage() {
       await supabase.auth.mfa.unenroll({ factorId: totpFactor.id });
       setMessage({ type: "success", text: "Đã tắt xác thực 2 lớp" });
       // Refresh page or state to update UI
+    }
+  };
+
+  const handleDownloadQR = () => {
+    const canvas = document.getElementById("qr-code-canvas") as HTMLCanvasElement;
+    if (canvas) {
+      const pngUrl = canvas.toDataURL("image/png");
+      const downloadLink = document.createElement("a");
+      downloadLink.href = pngUrl;
+      downloadLink.download = "vungtau-travel-2fa.png";
+      document.body.appendChild(downloadLink);
+      downloadLink.click();
+      document.body.removeChild(downloadLink);
+      setMessage({ type: "success", text: "Đã tải xuống mã QR thành công!" });
     }
   };
 
@@ -446,8 +463,18 @@ export default function ProfilePage() {
             ) : (
               <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
                 <div className="flex flex-col md:flex-row gap-6 items-center">
-                  <div className="bg-white p-2 rounded-lg shadow-sm">
-                    {qrCodeUrl && <img src={qrCodeUrl} alt="QR Code" width={150} height={150} />}
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="bg-white p-2 rounded-lg shadow-sm">
+                      {totpUri && <QRCodeCanvas id="qr-code-canvas" value={totpUri} size={150} />}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleDownloadQR}
+                      className="flex items-center gap-2 text-sm font-medium text-primary-600 hover:text-primary-700 hover:bg-primary-50 px-3 py-1.5 rounded-lg transition-colors"
+                    >
+                      <Download className="w-4 h-4" />
+                      Tải mã QR
+                    </button>
                   </div>
                   <div className="flex-1 space-y-4">
                     <h4 className="font-medium text-gray-900">Quét mã QR</h4>

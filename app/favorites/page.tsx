@@ -8,7 +8,6 @@ import { MapPin, ArrowUpRight, Heart } from "lucide-react";
 import Footer from "@/components/Footer";
 import { createClient } from "@/utils/supabase/client";
 
-/* ✅ Type tách riêng, KHÔNG phụ thuộc lib/data */
 interface Place {
   id: string;
   name: string;
@@ -29,11 +28,10 @@ export default function FavoritesPage() {
       } = await supabase.auth.getUser();
 
       if (!user) {
-        router.push("/login?next=/favorites");
+        router.push("/admin/login?next=/favorites");
         return;
       }
 
-      /* ✅ JOIN trực tiếp favorites → places */
       const { data, error } = await supabase
         .from("favorites")
         .select(
@@ -66,14 +64,14 @@ export default function FavoritesPage() {
   }, [router, supabase]);
 
   return (
-    <main className="min-h-screen bg-gray-50">
-      <div className="pt-32 pb-12 bg-white shadow-sm">
+    <main className="min-h-screen bg-[#F5FAFF]">
+      <div className="pt-32 pb-12 bg-[#F5FAFF] border-b border-slate-100">
         <div className="max-w-7xl mx-auto px-4 text-center">
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4 flex items-center justify-center gap-3">
+          <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4 flex items-center justify-center gap-3">
             <Heart className="w-8 h-8 text-red-500 fill-current" />
             Địa điểm yêu thích
           </h1>
-          <p className="text-gray-600 text-lg">
+          <p className="text-slate-500 text-lg">
             Danh sách những nơi bạn đã lưu lại
           </p>
         </div>
@@ -81,13 +79,13 @@ export default function FavoritesPage() {
 
       <div className="max-w-7xl mx-auto px-4 py-12 pb-20">
         {favorites.length === 0 ? (
-          <div className="text-center py-12 bg-white rounded-2xl shadow-sm">
-            <p className="text-gray-500 text-lg mb-4">
+          <div className="text-center py-12 bg-white rounded-2xl border border-slate-100 shadow-sm">
+            <p className="text-slate-500 text-lg mb-4">
               Bạn chưa có địa điểm yêu thích nào.
             </p>
             <Link
-              href="/"
-              className="text-primary-600 font-medium hover:underline"
+              href="/#places"
+              className="text-teal-600 font-medium hover:underline"
             >
               Khám phá ngay
             </Link>
@@ -98,9 +96,9 @@ export default function FavoritesPage() {
               <Link
                 key={place.id}
                 href={`/places/${place.id}`}
-                className="group bg-white rounded-2xl p-4 shadow-sm hover:shadow-xl transition border"
+                className="group bg-white rounded-2xl p-4 transition border border-slate-100 hover:shadow-lg hover:border-slate-200"
               >
-                <div className="relative aspect-[4/5] rounded-xl overflow-hidden mb-4 bg-gray-100">
+                <div className="relative aspect-[4/5] rounded-xl overflow-hidden mb-4 bg-slate-100">
                   <Image
                     src={
                       imageError[place.id]
@@ -119,18 +117,18 @@ export default function FavoritesPage() {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition" />
 
-                  <div className="absolute bottom-4 right-4 w-10 h-10 bg-white rounded-full flex items-center justify-center opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition shadow-lg">
+                  <div className="absolute bottom-4 right-4 w-10 h-10 bg-white rounded-full flex items-center justify-center opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition shadow-lg text-slate-900">
                     <ArrowUpRight className="w-5 h-5" />
                   </div>
                 </div>
 
-                <h3 className="text-xl font-bold text-gray-900 group-hover:text-primary-600 transition">
+                <h3 className="text-xl font-bold text-slate-900 group-hover:text-teal-600 transition">
                   {place.name}
                 </h3>
 
                 {place.address && (
-                  <div className="flex items-center gap-2 text-gray-500 mt-1">
-                    <MapPin className="w-4 h-4" />
+                  <div className="flex items-center gap-2 text-slate-500 mt-1">
+                    <MapPin className="w-4 h-4 text-teal-500" />
                     <p className="text-sm line-clamp-1">{place.address}</p>
                   </div>
                 )}

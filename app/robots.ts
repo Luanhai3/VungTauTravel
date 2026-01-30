@@ -1,7 +1,7 @@
 import { MetadataRoute } from "next";
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = "https://vungtautravel.com"; // Thay bằng domain thật của bạn
+  const baseUrl = "https://vung-tau-travel.vercel.app"; 
 
   return {
     rules: {

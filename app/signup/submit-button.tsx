@@ -10,7 +10,7 @@ export function SubmitButton() {
     <button
       type="submit"
       disabled={pending}
-      className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-xl text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+      className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-xl text-white bg-slate-900 hover:bg-slate-800 focus:outline-none transition-colors disabled:opacity-70 disabled:cursor-not-allowed shadow-lg shadow-slate-900/20"
     >
       {pending ? (
         <span className="flex items-center gap-2">

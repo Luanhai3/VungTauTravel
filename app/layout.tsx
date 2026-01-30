@@ -35,7 +35,7 @@ export default async function RootLayout({
 
   return (
     <html lang="vi" suppressHydrationWarning>
-      <body suppressHydrationWarning>
+      <body suppressHydrationWarning className="bg-[#F5FAFF] text-slate-800 antialiased selection:bg-teal-100 selection:text-teal-900">
         <Navbar initialUser={user} initialRole={userRole} />
         <Suspense fallback={null}>
           <Toast />

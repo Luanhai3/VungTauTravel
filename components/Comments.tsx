@@ -72,25 +72,25 @@ export default function Comments({ placeId }: { placeId: string }) {
   };
 
   return (
-    <div className="space-y-8 py-8 border-t border-gray-100 mt-12">
+    <div className="space-y-8 py-8 border-t border-slate-200 mt-12">
       <div className="flex items-center justify-between">
-        <h3 className="text-2xl font-bold text-gray-900">Bình luận & Đánh giá</h3>
+        <h3 className="text-2xl font-bold text-slate-900">Bình luận & Đánh giá</h3>
         <div className="flex items-center gap-1">
           <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-          <span className="font-bold text-lg">
+          <span className="font-bold text-lg text-slate-900">
             {comments.length > 0 
               ? (comments.reduce((acc, c) => acc + c.rating, 0) / comments.length).toFixed(1) 
               : "0.0"}
           </span>
-          <span className="text-gray-500 text-sm">({comments.length} đánh giá)</span>
+          <span className="text-slate-500 text-sm">({comments.length} đánh giá)</span>
         </div>
       </div>
 
       {/* Form thêm bình luận */}
       {user ? (
-        <form onSubmit={handleSubmit} className="bg-gray-50 p-6 rounded-xl border border-gray-100">
+        <form onSubmit={handleSubmit} className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Đánh giá của bạn</label>
+            <label className="block text-sm font-medium text-slate-500 mb-2">Đánh giá của bạn</label>
             <div className="flex gap-1">
               {[1, 2, 3, 4, 5].map((star) => (
                 <button
@@ -101,7 +101,7 @@ export default function Comments({ placeId }: { placeId: string }) {
                 >
                   <Star
                     className={`w-8 h-8 ${
-                      star <= rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
+                      star <= rating ? "fill-yellow-400 text-yellow-400" : "text-slate-200"
                     }`}
                   />
                 </button>
@@ -109,11 +109,11 @@ export default function Comments({ placeId }: { placeId: string }) {
             </div>
           </div>
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Nội dung</label>
+            <label className="block text-sm font-medium text-slate-500 mb-2">Nội dung</label>
             <textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none resize-none bg-white"
+              className="w-full p-3 border border-slate-200 rounded-lg focus:border-teal-500 outline-none resize-none bg-slate-50 text-slate-900 placeholder-slate-400"
               rows={3}
               placeholder="Chia sẻ trải nghiệm của bạn về địa điểm này..."
               required
@@ -123,7 +123,7 @@ export default function Comments({ placeId }: { placeId: string }) {
             <button
               type="submit"
               disabled={submitting}
-              className="px-6 py-2 bg-primary-600 text-white font-bold rounded-lg hover:bg-primary-700 transition-colors flex items-center gap-2 disabled:opacity-70"
+              className="px-6 py-2 bg-slate-900 text-white font-bold rounded-lg hover:bg-slate-800 transition-colors flex items-center gap-2 disabled:opacity-70"
             >
               <Send className="w-4 h-4" />
               {submitting ? "Đang gửi..." : "Gửi đánh giá"}
@@ -131,11 +131,11 @@ export default function Comments({ placeId }: { placeId: string }) {
           </div>
         </form>
       ) : (
-        <div className="bg-gray-50 p-8 rounded-xl border border-gray-100 text-center">
-          <p className="text-gray-600 mb-4 text-lg">Bạn cần đăng nhập để viết bình luận.</p>
+        <div className="bg-white p-8 rounded-2xl border border-slate-100 shadow-sm text-center">
+          <p className="text-slate-500 mb-4 text-lg">Bạn cần đăng nhập để viết bình luận.</p>
           <Link
             href="/admin/login"
-            className="inline-flex items-center justify-center px-6 py-3 bg-primary-600 text-white font-bold rounded-lg hover:bg-primary-700 transition-colors"
+            className="inline-flex items-center justify-center px-6 py-3 bg-slate-900 text-white font-bold rounded-lg hover:bg-slate-800 transition-colors"
           >
             Đăng nhập ngay
           </Link>
@@ -146,15 +146,15 @@ export default function Comments({ placeId }: { placeId: string }) {
       <div className="space-y-6">
         {loading ? (
           <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary-600 mx-auto mb-2"></div>
-            <p className="text-gray-500">Đang tải bình luận...</p>
+            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-teal-500 mx-auto mb-2"></div>
+            <p className="text-slate-500">Đang tải bình luận...</p>
           </div>
         ) : comments.length > 0 ? (
           comments.map((comment) => (
-            <div key={comment.id} className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+            <div key={comment.id} className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
               <div className="flex justify-between items-start mb-4">
                 <div className="flex items-center gap-3">
-                  <div className="relative w-10 h-10 rounded-full overflow-hidden bg-gray-100 border border-gray-200">
+                  <div className="relative w-10 h-10 rounded-full overflow-hidden bg-slate-100 border border-slate-200">
                     {comment.profiles?.avatar_url ? (
                       <Image
                         src={comment.profiles.avatar_url}
@@ -165,33 +165,33 @@ export default function Comments({ placeId }: { placeId: string }) {
                         sizes="40px"
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-400">
+                      <div className="w-full h-full flex items-center justify-center text-slate-400">
                         <User className="w-6 h-6" />
                       </div>
                     )}
                   </div>
                   <div>
-                    <div className="font-bold text-gray-900">
+                    <div className="font-bold text-slate-900">
                       {comment.profiles?.name || comment.profiles?.email?.split('@')[0] || "Người dùng"}
                     </div>
-                    <div className="text-xs text-gray-500">
+                    <div className="text-xs text-slate-500">
                       {formatDate(comment.created_at)}
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-1 bg-yellow-50 px-2 py-1 rounded-lg border border-yellow-100">
+                <div className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-lg border border-slate-100">
                   <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                  <span className="font-bold text-yellow-700">{comment.rating}</span>
+                  <span className="font-bold text-slate-700">{comment.rating}</span>
                 </div>
               </div>
-              <p className="text-gray-700 leading-relaxed">{comment.content}</p>
+              <p className="text-slate-700 leading-relaxed">{comment.content}</p>
               
               {/* Nút xóa cho chính chủ hoặc admin */}
               {(user?.id === comment.user_id || user?.email === 'hoangthienluan17@gmail.com') && (
                 <div className="mt-4 flex justify-end">
                   <button
                     onClick={() => handleDelete(comment.id)}
-                    className="text-sm text-red-500 hover:text-red-700 flex items-center gap-1 px-3 py-1 rounded-lg hover:bg-red-50 transition-colors"
+                    className="text-sm text-red-500 hover:text-red-400 flex items-center gap-1 px-3 py-1 rounded-lg hover:bg-red-500/10 transition-colors"
                   >
                     <Trash2 className="w-4 h-4" /> Xóa bình luận
                   </button>
@@ -200,11 +200,11 @@ export default function Comments({ placeId }: { placeId: string }) {
             </div>
           ))
         ) : (
-          <div className="text-center py-12 bg-gray-50 rounded-xl border border-dashed border-gray-200">
-            <div className="text-gray-400 mb-2">
+          <div className="text-center py-12 bg-white rounded-2xl border border-dashed border-slate-200">
+            <div className="text-slate-300 mb-2">
               <Star className="w-12 h-12 mx-auto opacity-20" />
             </div>
-            <p className="text-gray-500">Chưa có bình luận nào. Hãy là người đầu tiên đánh giá!</p>
+            <p className="text-slate-500">Chưa có bình luận nào. Hãy là người đầu tiên đánh giá!</p>
           </div>
         )}
       </div>

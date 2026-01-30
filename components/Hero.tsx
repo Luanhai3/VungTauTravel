@@ -37,7 +37,7 @@ export default function Hero() {
         >
           <source src="https://videos.pexels.com/video-files/854032/854032-hd_1920_1080_25fps.mp4" type="video/mp4" />
         </video>
-        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/20 to-black/60" />
+        <div className="absolute inset-0 bg-gradient-to-b from-sky-900/20 via-transparent to-teal-900/50" />
       </div>
 
       {/* Content */}
@@ -48,14 +48,14 @@ export default function Hero() {
               isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
             }`}
           >
-            VŨNG TÀU
-            <span className="block text-xl sm:text-2xl md:text-3xl font-light mt-4 tracking-[0.2em] text-white/90 font-sans">
-              THÀNH PHỐ BIỂN XINH ĐẸP
+            VUNG TAU
+            <span className="block text-lg sm:text-xl md:text-3xl font-light mt-2 tracking-[0.2em] text-white/90 font-sans uppercase">
+              Coastal Editorial
             </span>
           </h1>
           
           <p 
-            className={`text-lg sm:text-xl md:text-2xl text-white/90 max-w-3xl mx-auto leading-relaxed font-light transition-all duration-1000 delay-300 ease-out transform ${
+            className={`text-lg sm:text-xl md:text-2xl text-white/80 max-w-2xl mx-auto leading-relaxed font-light transition-all duration-1000 delay-300 ease-out transform ${
               isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
             }`}
           >
@@ -70,17 +70,16 @@ export default function Hero() {
         >
           <Link
             href="#categories"
-            className="group relative inline-flex items-center justify-center px-8 py-4 bg-white text-gray-900 font-bold rounded-full overflow-hidden transition-all duration-300 hover:shadow-[0_0_40px_-10px_rgba(255,255,255,0.5)] hover:scale-105 min-w-[200px]"
+            className="group relative inline-flex items-center justify-center px-8 py-4 bg-white text-slate-900 font-bold rounded-full overflow-hidden transition-all duration-300 hover:shadow-[0_0_40px_-10px_rgba(255,255,255,0.6)] hover:scale-105 min-w-[200px]"
           >
-            <span className="relative z-10 tracking-wider">KHÁM PHÁ NGAY</span>
-            <div className="absolute inset-0 bg-gray-100 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300" />
+            <span className="relative z-10 tracking-widest text-xs uppercase">Khám phá</span>
           </Link>
           
           <Link
             href="#places"
-            className="group inline-flex items-center justify-center px-8 py-4 bg-white/10 border border-white/30 backdrop-blur-md text-white font-bold rounded-full hover:bg-white/20 transition-all duration-300 hover:scale-105 min-w-[200px]"
+            className="group inline-flex items-center justify-center px-8 py-4 bg-white/10 backdrop-blur-md border border-white/30 text-white font-bold rounded-full hover:bg-white/20 transition-all duration-300 min-w-[200px]"
           >
-            <span className="tracking-wider">XEM ĐỊA ĐIỂM</span>
+            <span className="tracking-widest text-xs uppercase">Địa điểm</span>
           </Link>
         </div>
       </div>
@@ -94,7 +93,7 @@ export default function Hero() {
         <div className="animate-bounce flex flex-col items-center gap-2">
           <span className="text-white/60 text-[10px] uppercase tracking-[0.2em]">Cuộn xuống</span>
           <svg
-            className="w-5 h-5 text-white/80"
+            className="w-5 h-5 text-white/60"
             fill="none"
             strokeLinecap="round"
             strokeLinejoin="round"

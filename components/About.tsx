@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, X, MapPin, History, Mountain, Camera, Users, Building2, CheckCircle2 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 
 export default function About() {
   const [text1, setText1] = useState("");
@@ -14,6 +15,7 @@ export default function About() {
   const textRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLDivElement>(null);
   const [isImageLoaded, setIsImageLoaded] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   const fullText1 = "Chào mừng đến với";
   const fullText2 = "Vũng Tàu";
@@ -45,6 +47,10 @@ export default function About() {
       clearInterval(timer1);
       clearInterval(timer2);
     };
+  }, []);
+
+  useEffect(() => {
+    setMounted(true);
   }, []);
 
   useEffect(() => {
@@ -91,11 +97,11 @@ export default function About() {
   }, [isModalOpen]);
 
   return (
-    <section id="about" className="py-20 md:py-32 bg-white overflow-hidden">
+    <section id="about" className="py-24 md:py-36 bg-[#F5FAFF] overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           <div ref={imageRef} className="relative order-2 lg:order-1 will-change-transform">
-            <div className="relative h-[600px] w-full rounded-2xl overflow-hidden shadow-2xl">
+            <div className="relative h-[600px] w-full rounded-[2rem] overflow-hidden shadow-2xl shadow-teal-900/10">
               <Image
                 src="https://images.unsplash.com/photo-1506953823976-52e1fdc0149a?q=80&w=1000"
                 alt="Bờ biển Vũng Tàu xinh đẹp với sóng xanh và cát trắng"
@@ -111,26 +117,26 @@ export default function About() {
               />
             </div>
             {/* Decorative element */}
-            <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-primary-100 rounded-full -z-10 blur-3xl opacity-50"></div>
+            <div className="absolute -bottom-10 -left-10 w-64 h-64 bg-teal-100 rounded-full -z-10 blur-3xl opacity-50"></div>
           </div>
 
           <div className="order-1 lg:order-2 space-y-8">
             <div className="space-y-4">
-              <h4 className="text-primary-600 font-bold tracking-widest uppercase text-sm">
+              <h4 className="text-teal-600 font-bold tracking-widest uppercase text-xs">
                 Giới thiệu
               </h4>
-              <h2 className="text-4xl md:text-5xl font-black text-gray-900 leading-tight uppercase">
+              <h2 className="text-4xl md:text-6xl font-black text-slate-900 leading-[0.9] tracking-tighter uppercase">
                 {text1}
                 {showCursor1 && <span className="animate-pulse">|</span>}
                 <br />{" "}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-blue-600">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 via-cyan-400 to-amber-400">
                   {text2}
                 </span>
-                {!showCursor1 && <span className="animate-pulse text-primary-600">|</span>}
+                {!showCursor1 && <span className="animate-pulse text-teal-500">|</span>}
               </h2>
             </div>
 
-            <div ref={textRef} className="space-y-6 text-lg text-gray-600 font-light leading-relaxed">
+            <div ref={textRef} className="space-y-6 text-lg text-slate-600 font-light leading-relaxed">
               <p 
                 className={`transition-all duration-1000 ease-out transform ${
                   isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
@@ -154,51 +160,90 @@ export default function About() {
               </p>
             </div>
 
-            <button
-              onClick={() => setIsModalOpen(true)}
-              className="group inline-flex items-center gap-2 text-gray-900 font-bold uppercase tracking-wider hover:text-primary-600 transition-colors"
+            <div
+              className={`transition-all duration-1000 ease-out transform delay-700 ${
+                isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
+              }`}
             >
-              Khám phá ngay
-              <ArrowRight className="w-5 h-5 transform group-hover:translate-x-2 transition-transform" />
-            </button>
+             <button
+  onClick={() => setIsModalOpen(true)}
+  className="group inline-flex items-center justify-center gap-3 px-9 py-4 rounded-full bg-gradient-to-r from-slate-900 to-slate-800 text-white font-semibold backdrop-blur transition-all duration-300 hover:shadow-xl hover:scale-[1.04]"
+>
+  <span className="text-sm uppercase tracking-wide whitespace-nowrap">
+    Khám phá ngay
+  </span>
+  <ArrowRight className="w-5 h-5 opacity-80 group-hover:translate-x-1 transition-all" />
+</button>
+
+
+            </div>
           </div>
         </div>
       </div>
 
       {/* Detail Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
+      {isModalOpen && mounted && createPortal(
+        <div className="fixed inset-0 z-[999] flex items-start justify-center bg-black/50 backdrop-blur-lg">
+
+          {/* Click backdrop to close */}
           <div 
-            className="absolute inset-0 bg-black/60 backdrop-blur-md transition-opacity duration-300"
+            className="absolute inset-0"
             onClick={() => setIsModalOpen(false)}
           />
           
-          <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-300 flex flex-col">
-            <div className="sticky top-0 right-0 z-10 flex justify-end p-4 bg-gradient-to-b from-white via-white/90 to-transparent">
+          {/* Modal container */}
+          <div 
+            className="
+              relative w-full max-w-5xl h-screen md:h-[92vh]
+              bg-gradient-to-b from-[#F8FBFF] via-white to-white
+              md:rounded-[2.5rem]
+              shadow-[0_40px_120px_-40px_rgba(0,0,0,0.25)]
+              flex flex-col
+              animate-in fade-in slide-in-from-bottom-6 zoom-in-95
+              duration-300
+            "
+          >
+
+            {/* Header (sticky, không scroll) */}
+            <div className="sticky top-0 z-30 flex items-center justify-between px-6 md:px-10 py-5 bg-white/80 backdrop-blur-xl border-b border-slate-100 rounded-t-[2.5rem]">
+              <div className="text-sm uppercase tracking-widest text-teal-600 font-semibold">
+                Vũng Tàu
+              </div>
+
               <button 
                 onClick={() => setIsModalOpen(false)}
-                className="p-2 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors shadow-sm group"
+                className="
+                  p-2 rounded-full
+                  bg-slate-100 hover:bg-slate-200
+                  transition-all duration-300
+                  shadow-sm hover:shadow-md
+                  group
+                "
               >
-                <X className="w-6 h-6 text-gray-600 group-hover:rotate-90 transition-transform duration-300" />
+                <X className="w-5 h-5 text-slate-600 group-hover:rotate-90 transition-transform duration-300" />
               </button>
             </div>
 
-            <div className="px-6 pb-12 md:px-12 md:pb-16 -mt-6">
-               <div className="text-center mb-12">
-                 <h2 className="text-3xl md:text-5xl font-black text-gray-900 mb-4 leading-tight uppercase tracking-tight">
-                   Thành Phố Vũng Tàu
-                 </h2>
-                 <p className="text-xl md:text-2xl text-primary-600 font-light italic">
-                   Bản Giao Hưởng Giữa Biển, Lịch Sử Và Nhịp Sống Hiện Đại
-                 </p>
-                 <div className="w-24 h-1.5 bg-primary-600 mx-auto mt-8 rounded-full"></div>
-               </div>
+            {/* Scrollable content – CHỈ CHỖ NÀY ĐƯỢC SCROLL */}
+            <div className="flex-1 overflow-y-auto px-6 md:px-12 py-10 md:py-14 scroll-smooth">
+              
+              <div className="text-center mb-12">
+                <h2 className="text-4xl md:text-6xl font-black tracking-tight text-slate-900 uppercase">
+                  Thành Phố Vũng Tàu
+                </h2>
+                <p className="mt-5 text-xl md:text-2xl text-teal-600 font-light italic">
+                  Bản giao hưởng giữa biển, lịch sử và nhịp sống hiện đại
+                </p>
+                <div className="mt-8 flex justify-center">
+                  <span className="h-1.5 w-24 rounded-full bg-gradient-to-r from-teal-400 via-cyan-400 to-sky-400" />
+                </div>
+              </div>
 
-               <div className="space-y-12 text-gray-700 leading-relaxed text-lg">
+              <div className="space-y-20 text-slate-700 leading-relaxed text-lg">
                  {/* Section 1: Overview */}
-                 <section>
-                   <h3 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-3">
-                     <MapPin className="w-6 h-6 text-primary-600" />
+                 <section className="space-y-5">
+                   <h3 className="flex items-center gap-3 text-2xl font-bold text-slate-900">
+                     <MapPin className="w-6 h-6 text-teal-500" />
                      Giới thiệu tổng quan
                    </h3>
                    <p className="mb-4">Thành phố Vũng Tàu là một trong những đô thị biển nổi tiếng nhất miền Nam Việt Nam, thuộc tỉnh Bà Rịa – Vũng Tàu. Nằm cách TP.HCM khoảng 90 km, Vũng Tàu từ lâu đã trở thành điểm đến quen thuộc cho du khách trong và ngoài nước nhờ lợi thế biển đẹp, khí hậu ôn hòa, hạ tầng phát triển và bề dày lịch sử độc đáo.</p>
@@ -206,9 +251,9 @@ export default function About() {
                  </section>
 
                  {/* Section 2: History */}
-                 <section className="bg-gray-50 p-6 rounded-2xl">
-                   <h3 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-3">
-                     <History className="w-6 h-6 text-primary-600" />
+                 <section className="rounded-3xl bg-slate-50 p-8 md:p-10 space-y-5">
+                   <h3 className="flex items-center gap-3 text-2xl font-bold text-slate-900">
+                     <History className="w-6 h-6 text-teal-500" />
                      Lịch sử hình thành và phát triển
                    </h3>
                    <p className="mb-4">Tên gọi Vũng Tàu bắt nguồn từ thời xa xưa, khi nơi đây là vùng neo đậu tàu thuyền của ngư dân. Trước thế kỷ XVII, khu vực này chủ yếu là làng chài nhỏ ven biển, người dân sinh sống bằng nghề đánh bắt hải sản.</p>
@@ -217,9 +262,9 @@ export default function About() {
                  </section>
 
                  {/* Section 3: Geography */}
-                 <section>
-                   <h3 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-3">
-                     <Mountain className="w-6 h-6 text-primary-600" />
+                 <section className="space-y-5">
+                   <h3 className="flex items-center gap-3 text-2xl font-bold text-slate-900">
+                     <Mountain className="w-6 h-6 text-teal-500" />
                      Vị trí địa lý và điều kiện tự nhiên
                    </h3>
                    <p className="mb-4">Vũng Tàu sở hữu vị trí địa lý đặc biệt với ba mặt giáp biển, tạo nên hệ thống bãi biển đẹp trải dài từ trung tâm đến ngoại ô. Khí hậu nơi đây mang đặc trưng nhiệt đới gió mùa, nắng nhiều, ít bão, nhiệt độ trung bình quanh năm khoảng 25–27°C, rất lý tưởng cho du lịch và nghỉ dưỡng.</p>
@@ -227,9 +272,9 @@ export default function About() {
                  </section>
 
                  {/* Section 4: Highlights */}
-                 <section>
-                   <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-                     <Camera className="w-6 h-6 text-primary-600" />
+                 <section className="space-y-8">
+                   <h3 className="flex items-center gap-3 text-2xl font-bold text-slate-900">
+                     <Camera className="w-6 h-6 text-teal-500" />
                      Những điểm du lịch nổi bật
                    </h3>
                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -240,18 +285,27 @@ export default function About() {
                        { title: "Hải đăng Vũng Tàu", desc: "Ngọn hải đăng cổ từ thế kỷ XIX, điểm check-in yêu thích với tầm nhìn rộng và không khí trong lành." },
                        { title: "Bạch Dinh", desc: "Công trình kiến trúc Pháp cổ, từng là nơi nghỉ dưỡng của toàn quyền Đông Dương. Lý tưởng cho người yêu lịch sử." }
                      ].map((item, idx) => (
-                       <div key={idx} className="bg-white border border-gray-100 p-5 rounded-xl shadow-sm hover:shadow-md transition-shadow">
-                         <h4 className="font-bold text-lg text-primary-700 mb-2">{item.title}</h4>
-                         <p className="text-gray-600 text-base">{item.desc}</p>
+                       <div 
+                         key={idx} 
+                         className="
+                           rounded-2xl p-6
+                           bg-white
+                           shadow-sm hover:shadow-xl
+                           transition-all duration-300
+                           hover:-translate-y-1
+                         "
+                       >
+                         <h4 className="font-semibold text-teal-700 mb-2">{item.title}</h4>
+                         <p className="text-slate-600 text-base">{item.desc}</p>
                        </div>
                      ))}
                    </div>
                  </section>
 
                  {/* Section 5: Culture */}
-                 <section className="bg-primary-50 p-8 rounded-2xl">
-                   <h3 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-3">
-                     <Users className="w-6 h-6 text-primary-600" />
+                 <section className="rounded-3xl bg-teal-50 p-8 md:p-10 space-y-5">
+                   <h3 className="flex items-center gap-3 text-2xl font-bold text-slate-900">
+                     <Users className="w-6 h-6 text-teal-500" />
                      Văn hóa – Con người
                    </h3>
                    <p className="mb-4">Người Vũng Tàu mang đậm tính cách của cư dân miền biển: thân thiện, cởi mở, phóng khoáng và hiếu khách. Văn hóa biển thể hiện rõ qua các lễ hội truyền thống như Lễ Nghinh Ông, cầu cho mưa thuận gió hòa, đánh bắt bội thu.</p>
@@ -259,17 +313,17 @@ export default function About() {
                  </section>
 
                  {/* Section 6: Modern City */}
-                 <section>
-                   <h3 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-3">
-                     <Building2 className="w-6 h-6 text-primary-600" />
+                 <section className="space-y-5">
+                   <h3 className="flex items-center gap-3 text-2xl font-bold text-slate-900">
+                     <Building2 className="w-6 h-6 text-teal-500" />
                      Thành phố hiện đại và năng động
                    </h3>
                    <p className="mb-4">Ngày nay, Vũng Tàu không chỉ là thành phố du lịch mà còn là trung tâm kinh tế quan trọng của khu vực Đông Nam Bộ. Hệ thống hạ tầng giao thông ngày càng hoàn thiện với cao tốc Biên Hòa – Vũng Tàu, cảng biển quốc tế Cái Mép – Thị Vải và các dự án đô thị quy mô lớn.</p>
                    <p className="mb-4 font-medium">Thành phố đang thu hút mạnh mẽ đầu tư vào các lĩnh vực:</p>
                    <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
                      {["Du lịch nghỉ dưỡng cao cấp", "Bất động sản ven biển", "Dịch vụ – thương mại", "Công nghiệp dầu khí và logistics"].map((item, idx) => (
-                       <li key={idx} className="flex items-center gap-2 text-gray-700">
-                         <div className="w-2 h-2 bg-primary-500 rounded-full"></div>
+                       <li key={idx} className="flex items-center gap-2 text-slate-700">
+                         <div className="w-2 h-2 bg-teal-400 rounded-full"></div>
                          {item}
                        </li>
                      ))}
@@ -278,8 +332,8 @@ export default function About() {
                  </section>
 
                  {/* Section 7: Why Choose */}
-                 <section className="border-t border-gray-200 pt-8">
-                   <h3 className="text-2xl font-bold text-gray-900 mb-6 text-center">Vì sao nên chọn Vũng Tàu làm điểm đến?</h3>
+                 <section className="border-t border-slate-200 pt-14 space-y-8">
+                   <h3 className="text-2xl font-bold text-center text-slate-900">Vì sao nên chọn Vũng Tàu làm điểm đến?</h3>
                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                      {[
                        "Khoảng cách gần TP.HCM, dễ di chuyển",
@@ -289,17 +343,17 @@ export default function About() {
                        "Phù hợp cho du lịch ngắn ngày, dài ngày hoặc đầu tư lâu dài"
                      ].map((reason, idx) => (
                        <div key={idx} className="flex items-start gap-3">
-                         <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                         <span className="text-gray-700 font-medium">{reason}</span>
+                         <CheckCircle2 className="w-5 h-5 text-teal-500 mt-1" />
+                         <span className="font-medium">{reason}</span>
                        </div>
                      ))}
                    </div>
                  </section>
-               </div>
+              </div>
             </div>
           </div>
         </div>
-      )}
+      , document.body)}
     </section>
   );
 }

@@ -49,13 +49,13 @@ export default function FeaturedPlaces() {
   if (places.length === 0) return null; // Ẩn section nếu không có địa điểm nổi bật
 
   return (
-    <section id="places" className="py-24 bg-white">
+    <section id="places" className="py-24 bg-[#F5FAFF]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <h2 className="text-4xl md:text-5xl font-black text-gray-900 uppercase tracking-tight mb-6">
-            Điểm đến nổi bật
+          <h2 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tighter mb-4">
+            Featured Places
           </h2>
-          <p className="text-gray-600 text-lg font-light">
+          <p className="text-slate-500 text-lg font-light">
             Những địa điểm được yêu thích nhất bởi cộng đồng du lịch
           </p>
         </div>
@@ -67,7 +67,7 @@ export default function FeaturedPlaces() {
               href={`/places/${place.id}`}
               className="group cursor-pointer block"
             >
-              <div className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl mb-6 bg-gray-100">
+              <div className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl mb-6 bg-white shadow-sm border border-slate-100">
                 <Image
                   src={imageError[place.id] ? "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800" : place.imageUrl}
                   alt={`Hình ảnh địa điểm ${place.name} - ${place.category} tại Vũng Tàu`}
@@ -84,7 +84,7 @@ export default function FeaturedPlaces() {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
                 <div className="absolute top-4 left-4">
-                  <span className="px-4 py-2 bg-white/90 backdrop-blur-md text-gray-900 text-xs font-bold uppercase tracking-wider rounded-full">
+                  <span className="px-3 py-1 bg-white/90 backdrop-blur-md text-slate-900 border border-white/50 text-xs font-bold uppercase tracking-wider rounded-full shadow-sm">
                     {place.category}
                   </span>
                 </div>
@@ -95,21 +95,21 @@ export default function FeaturedPlaces() {
                     e.stopPropagation();
                     window.open(place.googleMapsUrl, '_blank');
                   }}
-                  className="absolute bottom-6 right-6 w-12 h-12 bg-white rounded-full flex items-center justify-center text-gray-900 opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 hover:bg-primary-600 hover:text-white shadow-lg"
+                  className="absolute bottom-4 right-4 w-10 h-10 bg-white rounded-full flex items-center justify-center text-slate-900 opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 hover:bg-teal-50 shadow-lg"
                 >
                   <ArrowUpRight className="w-5 h-5" />
                 </button>
               </div>
 
               <div className="space-y-2">
-                <h3 className="text-2xl font-bold text-gray-900 group-hover:text-primary-600 transition-colors">
+                <h3 className="text-xl font-bold text-slate-900 group-hover:text-teal-600 transition-colors">
                   {place.name}
                 </h3>
-                <div className="flex items-start gap-2 text-gray-500">
-                  <MapPin className="w-4 h-4 mt-1 flex-shrink-0" />
+                <div className="flex items-start gap-2 text-slate-500">
+                  <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0 text-teal-500" />
                   <p className="text-sm leading-relaxed line-clamp-1">{place.address}</p>
                 </div>
-                <p className="text-gray-600 text-sm line-clamp-2 font-light">
+                <p className="text-slate-500 text-sm line-clamp-2 font-light">
                   {place.description}
                 </p>
               </div>
@@ -123,9 +123,9 @@ export default function FeaturedPlaces() {
             <button
               onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
               disabled={currentPage === 1}
-              className="p-2 rounded-full border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="p-2 rounded-full border border-slate-200 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-slate-600"
             >
-              <ChevronLeft className="w-6 h-6 text-gray-600" />
+              <ChevronLeft className="w-6 h-6" />
             </button>
             
             <div className="flex items-center gap-2">
@@ -135,8 +135,8 @@ export default function FeaturedPlaces() {
                   onClick={() => setCurrentPage(page)}
                   className={`w-10 h-10 rounded-full font-medium transition-all ${
                     currentPage === page
-                      ? "bg-primary-600 text-white shadow-lg scale-110"
-                      : "bg-white text-gray-600 hover:bg-gray-50 border border-gray-200"
+                      ? "bg-slate-900 text-white"
+                      : "bg-transparent text-slate-500 hover:bg-white border border-slate-200"
                   }`}
                 >
                   {page}
@@ -147,9 +147,9 @@ export default function FeaturedPlaces() {
             <button
               onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
               disabled={currentPage === totalPages}
-              className="p-2 rounded-full border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="p-2 rounded-full border border-slate-200 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-slate-600"
             >
-              <ChevronRight className="w-6 h-6 text-gray-600" />
+              <ChevronRight className="w-6 h-6" />
             </button>
           </div>
         )}

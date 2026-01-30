@@ -15,17 +15,17 @@ export default function Gallery() {
   ];
 
   return (
-    <section className="py-24 bg-gray-50 overflow-hidden">
+    <section className="py-24 bg-[#F5FAFF] overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
-          <div className="flex items-center justify-center gap-2 text-primary-600 font-bold tracking-widest uppercase text-sm mb-4">
-            <Instagram className="w-4 h-4" />
+          <div className="flex items-center justify-center gap-2 text-slate-400 font-medium tracking-widest uppercase text-xs mb-4">
+            <Instagram className="w-3 h-3 text-teal-500" />
             <span>@VungTauTravel</span>
           </div>
-          <h2 className="text-4xl md:text-5xl font-black text-gray-900 uppercase tracking-tight">
-            Góc nhìn <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-blue-600">Du khách</span>
+          <h2 className="text-4xl md:text-5xl font-black text-slate-900 uppercase tracking-tighter">
+            Community Gallery
           </h2>
-          <p className="mt-4 text-gray-600 text-lg font-light">
+          <p className="mt-4 text-slate-500 text-lg font-light">
             Những khoảnh khắc tuyệt đẹp được ghi lại bởi cộng đồng
           </p>
         </div>
@@ -45,7 +45,7 @@ function GalleryItem({ src, index }: { src: string; index: number }) {
   const [isLoaded, setIsLoaded] = useState(false);
 
   return (
-    <div className="relative group rounded-3xl overflow-hidden break-inside-avoid shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 cursor-pointer">
+    <div className="relative group rounded-2xl overflow-hidden break-inside-avoid border border-slate-100 shadow-sm transition-all duration-500 hover:-translate-y-1 cursor-pointer">
       <Image
         src={src}
         alt={`Khoảnh khắc du lịch Vũng Tàu đẹp #${index + 1}`}
@@ -61,7 +61,7 @@ function GalleryItem({ src, index }: { src: string; index: number }) {
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-6">
         <div className="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
-          <div className="flex items-center gap-2 text-white font-medium backdrop-blur-md bg-white/20 px-4 py-2 rounded-full w-fit">
+          <div className="flex items-center gap-2 text-white font-medium backdrop-blur-md bg-black/50 border border-white/10 px-4 py-2 rounded-full w-fit">
             <Instagram className="w-4 h-4" />
             <span className="text-sm">Xem trên Instagram</span>
           </div>

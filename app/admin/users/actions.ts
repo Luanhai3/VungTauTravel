@@ -19,16 +19,6 @@ export async function deleteUser(userId: string) {
   if (profile?.role !== 'admin' && user.email !== 'hoangthienluan17@gmail.com') {
     return { success: false, message: "Không có quyền thực hiện" };
   }
-
-  // Xóa user khỏi Auth (cần dùng Service Role key nếu muốn xóa hoàn toàn, 
-  // nhưng ở đây ta dùng client admin auth nếu được cấu hình, hoặc chỉ xóa profile)
-  // Lưu ý: Supabase Client mặc định không thể xóa user khỏi auth.users.
-  // Để xóa triệt để, bạn cần dùng supabase-admin (service role key).
-  // Tạm thời ta sẽ xóa profile, và giả định trigger sẽ xử lý hoặc chấp nhận user vẫn còn trong auth nhưng mất profile.
-  
-  // Cách tốt nhất là dùng Service Role Client. Nhưng để đơn giản trong scope này,
-  // ta sẽ xóa record trong bảng profiles. Nếu bảng profiles có foreign key cascade, nó sẽ không xóa auth user.
-  // Để xóa auth user, ta cần Service Role.
   
   const { error } = await supabase.from('profiles').delete().eq('id', userId);
 

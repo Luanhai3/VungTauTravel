@@ -190,12 +190,18 @@ export async function sendQuickEmail(email: string, subject: string, content: st
   );
 
   try {
-    await resend.emails.send({
-      from: 'Vung Tau Travel <newsletter@yourdomain.com>', // Thay bằng domain đã verify của bạn
+    const { error } = await resend.emails.send({
+      from: 'Vung Tau Travel <onboarding@resend.dev>',
+      replyTo: 'hoangthienluan17@gmail.com',
       to: email,
       subject: subject,
       html: emailHtml,
     });
+
+    if (error) {
+      return { success: false, message: "Lỗi từ Resend: " + error.message };
+    }
+
     return { success: true, message: `Đã gửi email đến ${email}` };
   } catch (error: any) {
     console.error("Resend Error:", error);
@@ -232,7 +238,8 @@ export async function sendNewsletter(subject: string, content: string) {
     // Sử dụng Batch API để gửi nhiều email cùng lúc (tối đa 100 email/batch)
     // Lưu ý: Với tài khoản Resend chưa verify domain, bạn chỉ có thể gửi đến chính email đăng ký Resend.
     const emailBatches = emails.map(email => ({
-      from: 'Vung Tau Travel <newsletter@yourdomain.com>', // Thay bằng domain đã verify của bạn
+      from: 'Vung Tau Travel <onboarding@resend.dev>',
+      replyTo: 'hoangthienluan17@gmail.com',
       to: email,
       subject: subject,
       html: emailHtml,
@@ -240,7 +247,11 @@ export async function sendNewsletter(subject: string, content: string) {
 
     // Demo gửi 100 email đầu tiên (do giới hạn batch)
     const batchToSend = emailBatches.slice(0, 100);
-    await resend.batch.send(batchToSend);
+    const { error } = await resend.batch.send(batchToSend);
+
+    if (error) {
+      return { success: false, message: "Lỗi khi gửi newsletter: " + error.message };
+    }
 
   } catch (error: any) {
     console.error("Resend Error:", error);
@@ -309,13 +320,17 @@ export async function resendNewsletter(newsletterId: string) {
   const emailHtml = await render(NotificationEmail(newsletter));
 
   const emailBatches = emails.map(email => ({
-    from: 'Vung Tau Travel <newsletter@yourdomain.com>', // Thay bằng domain đã verify của bạn
+    from: 'Vung Tau Travel <onboarding@resend.dev>',
+    replyTo: 'hoangthienluan17@gmail.com',
     to: email,
     subject: newsletter.subject,
     html: emailHtml,
   }));
 
-  await resend.batch.send(emailBatches.slice(0, 100));
+  const { error } = await resend.batch.send(emailBatches.slice(0, 100));
+  if (error) {
+    return { success: false, message: "Lỗi khi gửi lại newsletter: " + error.message };
+  }
 
   // Cập nhật trạng thái newsletter
   await supabaseAdmin.from("newsletters").update({ status: 'sent', scheduled_at: new Date().toISOString() }).eq("id", newsletterId);

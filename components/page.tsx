@@ -116,7 +116,7 @@ export default function PlaceDetailPage() {
   const handleToggleFavorite = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      router.push(`/login?next=${window.location.pathname}`);
+      router.push(`/admin/login?next=${window.location.pathname}`);
       return;
     }
 
@@ -149,7 +149,17 @@ export default function PlaceDetailPage() {
   };
 
   const handleShareFacebook = () => {
-    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`, '_blank');
+    const url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`;
+    const width = 600;
+    const height = 400;
+    const left = window.screen.width / 2 - width / 2;
+    const top = window.screen.height / 2 - height / 2;
+
+    window.open(
+      url,
+      'facebook-share-dialog',
+      `width=${width},height=${height},top=${top},left=${left}`
+    );
   };
 
   const handleShareZalo = () => {
@@ -158,9 +168,9 @@ export default function PlaceDetailPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-white">
+      <main className="min-h-screen bg-[#F5FAFF]">
         <div className="h-screen flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-teal-500"></div>
         </div>
       </main>
     );
@@ -168,13 +178,13 @@ export default function PlaceDetailPage() {
 
   if (!place) {
     return (
-      <main className="min-h-screen bg-gray-50">
+      <main className="min-h-screen bg-[#F5FAFF]">
         <div className="pt-32 pb-12 text-center px-4">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Không tìm thấy địa điểm</h1>
-          <p className="text-gray-600 mb-8">Địa điểm bạn đang tìm kiếm không tồn tại hoặc đã bị xóa.</p>
+          <h1 className="text-2xl font-bold text-slate-900 mb-4">Không tìm thấy địa điểm</h1>
+          <p className="text-slate-500 mb-8">Địa điểm bạn đang tìm kiếm không tồn tại hoặc đã bị xóa.</p>
           <Link 
             href="/" 
-            className="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-full hover:bg-primary-700 transition-colors"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-slate-900 text-white rounded-full hover:bg-slate-800 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
             Quay về trang chủ
@@ -186,24 +196,24 @@ export default function PlaceDetailPage() {
   }
 
   return (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-screen bg-[#F5FAFF]">
       {/* Breadcrumb */}
-      <div className="bg-gray-50 border-b border-gray-100">
+      <div className="bg-white border-b border-slate-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-          <nav className="flex items-center text-sm text-gray-500">
-            <Link href="/" className="hover:text-primary-600 flex items-center gap-1 transition-colors">
+          <nav className="flex items-center text-sm text-slate-500">
+            <Link href="/" className="hover:text-teal-600 flex items-center gap-1 transition-colors">
               <Home className="w-4 h-4" />
               Trang chủ
             </Link>
-            <ChevronRight className="w-4 h-4 mx-2 text-gray-400" />
+            <ChevronRight className="w-4 h-4 mx-2 text-slate-300" />
             <Link 
               href={`/categories/${categorySlugMap[place.category] || 'du-lich'}`} 
-              className="hover:text-primary-600 transition-colors"
+              className="hover:text-teal-600 transition-colors"
             >
               {place.category}
             </Link>
-            <ChevronRight className="w-4 h-4 mx-2 text-gray-400" />
-            <span className="text-gray-900 font-medium truncate max-w-[200px] sm:max-w-xs">
+            <ChevronRight className="w-4 h-4 mx-2 text-slate-300" />
+            <span className="text-slate-800 font-medium truncate max-w-[200px] sm:max-w-xs">
               {place.name}
             </span>
           </nav>
@@ -218,19 +228,19 @@ export default function PlaceDetailPage() {
                     "@type": "ListItem",
                     "position": 1,
                     "name": "Trang chủ",
-                    "item": "https://vungtautravel.com"
+                    "item": "https://vung-tau-travel.vercel.app"
                   },
                   {
                     "@type": "ListItem",
                     "position": 2,
                     "name": place.category,
-                    "item": `https://vungtautravel.com/categories/${categorySlugMap[place.category] || 'du-lich'}`
+                    "item": `https://vung-tau-travel.vercel.app/categories/${categorySlugMap[place.category] || 'du-lich'}`
                   },
                   {
                     "@type": "ListItem",
                     "position": 3,
                     "name": place.name,
-                    "item": `https://vungtautravel.com/places/${place.id}`
+                    "item": `https://vung-tau-travel.vercel.app/places/${place.id}`
                   }
                 ]
               })
@@ -268,17 +278,17 @@ export default function PlaceDetailPage() {
           
           <button
             onClick={handleToggleFavorite}
-            className={`absolute top-6 right-6 p-3 rounded-full backdrop-blur-md transition-all ${isFavorite ? 'bg-white text-red-500' : 'bg-black/30 text-white hover:bg-white hover:text-red-500'}`}
+            className={`absolute top-6 right-6 p-3 rounded-full backdrop-blur-md transition-all ${isFavorite ? 'bg-white text-red-500 shadow-lg' : 'bg-black/20 text-white hover:bg-white hover:text-red-500'}`}
           >
             <Heart className={`w-6 h-6 ${isFavorite ? 'fill-current' : ''}`} />
           </button>
           
           <div className="flex flex-wrap items-center gap-4 mb-4">
-            <span className="px-4 py-1.5 bg-primary-600 text-white text-sm font-bold uppercase tracking-wider rounded-full">
+            <span className="px-4 py-1.5 bg-white text-black text-sm font-bold uppercase tracking-wider rounded-full">
               {place.category}
             </span>
             {place.isFeatured && (
-              <span className="px-4 py-1.5 bg-yellow-500 text-white text-sm font-bold uppercase tracking-wider rounded-full flex items-center gap-1">
+              <span className="px-4 py-1.5 bg-white/20 backdrop-blur-md border border-white/30 text-white text-sm font-bold uppercase tracking-wider rounded-full flex items-center gap-1">
                 <Star className="w-4 h-4 fill-current" />
                 Nổi bật
               </span>
@@ -291,7 +301,7 @@ export default function PlaceDetailPage() {
 
           {totalReviews > 0 && (
             <div className="flex items-center gap-2 mb-4 text-white/90">
-              <div className="flex items-center gap-1 bg-white/20 backdrop-blur-md px-3 py-1 rounded-full">
+              <div className="flex items-center gap-1 bg-white/20 border border-white/20 backdrop-blur-md px-3 py-1 rounded-full">
                 <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
                 <span className="font-bold text-white">{averageRating}</span>
               </div>
@@ -312,33 +322,33 @@ export default function PlaceDetailPage() {
           {/* Main Info */}
           <div className="lg:col-span-2 space-y-8">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                <Info className="w-6 h-6 text-primary-600" />
+              <h2 className="text-2xl font-bold text-slate-900 mb-4 flex items-center gap-2">
+                <Info className="w-6 h-6 text-teal-500" />
                 Giới thiệu
               </h2>
-              <p className="text-gray-600 text-lg leading-relaxed whitespace-pre-line">
+              <p className="text-slate-600 text-lg leading-relaxed whitespace-pre-line">
                 {place.description}
               </p>
             </div>
 
             {/* Additional placeholder content */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-8 border-t border-gray-100">
-              <div className="bg-gray-50 p-6 rounded-xl">
-                <h3 className="font-bold text-gray-900 mb-2 flex items-center gap-2">
-                  <Clock className="w-5 h-5 text-primary-600" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-8 border-t border-slate-200">
+              <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+                <h3 className="font-bold text-slate-900 mb-2 flex items-center gap-2">
+                  <Clock className="w-5 h-5 text-teal-500" />
                   Giờ mở cửa
                 </h3>
-                <p className="text-gray-600">
+                <p className="text-slate-600">
                   {place.openingHours || "Đang cập nhật"}<br/>
                   {/* <span className="text-sm text-gray-500">(Thời gian có thể thay đổi vào ngày lễ)</span> */}
                 </p>
               </div>
-              <div className="bg-gray-50 p-6 rounded-xl">
-                <h3 className="font-bold text-gray-900 mb-2 flex items-center gap-2">
-                  <Calendar className="w-5 h-5 text-primary-600" />
+              <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+                <h3 className="font-bold text-slate-900 mb-2 flex items-center gap-2">
+                  <Calendar className="w-5 h-5 text-teal-500" />
                   Thời điểm lý tưởng
                 </h3>
-                <p className="text-gray-600">
+                <p className="text-slate-600">
                   {place.bestTime || "Đang cập nhật"}<br/>
                   {/* <span className="text-sm text-gray-500">Đẹp nhất vào mùa khô (Tháng 11 - Tháng 4)</span> */}
                 </p>
@@ -347,11 +357,11 @@ export default function PlaceDetailPage() {
 
             {/* Gallery Section */}
             {place.galleryImages && place.galleryImages.length > 0 && (
-              <div className="pt-8 border-t border-gray-100">
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">Thư viện ảnh</h2>
+              <div className="pt-8 border-t border-slate-200">
+                <h2 className="text-2xl font-bold text-slate-900 mb-6">Thư viện ảnh</h2>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                   {place.galleryImages.map((img, idx) => (
-                    <div key={idx} className="relative aspect-[4/3] rounded-xl overflow-hidden cursor-pointer hover:opacity-90 transition-opacity shadow-sm">
+                    <div key={idx} className="relative aspect-[4/3] rounded-xl overflow-hidden cursor-pointer hover:opacity-90 transition-opacity border border-slate-100 shadow-sm">
                       <Image 
                         src={img} 
                         alt={`${place.name} - Ảnh ${idx + 1}`} 
@@ -371,25 +381,25 @@ export default function PlaceDetailPage() {
 
           {/* Sidebar */}
           <div className="space-y-8">
-            <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 sticky top-24">
-              <h3 className="text-xl font-bold text-gray-900 mb-6">Thông tin địa điểm</h3>
+            <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm sticky top-24">
+              <h3 className="text-xl font-bold text-slate-900 mb-6">Thông tin địa điểm</h3>
               
               <div className="space-y-6">
                 <div>
-                  <label className="text-sm font-medium text-gray-500 block mb-1">Địa chỉ</label>
-                  <p className="text-gray-900 font-medium">{place.address}</p>
+                  <label className="text-sm font-medium text-slate-400 block mb-1">Địa chỉ</label>
+                  <p className="text-slate-800 font-medium">{place.address}</p>
                 </div>
                 
                 <div>
-                  <label className="text-sm font-medium text-gray-500 block mb-1">Danh mục</label>
-                  <p className="text-gray-900 font-medium">{place.category}</p>
+                  <label className="text-sm font-medium text-slate-400 block mb-1">Danh mục</label>
+                  <p className="text-slate-800 font-medium">{place.category}</p>
                 </div>
 
                 <a
                   href={place.googleMapsUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block w-full py-4 bg-primary-600 hover:bg-primary-700 text-white text-center font-bold rounded-xl transition-colors shadow-lg shadow-primary-600/20 flex items-center justify-center gap-2"
+                  className="block w-full py-4 bg-slate-900 hover:bg-slate-800 text-white text-center font-bold rounded-xl transition-colors flex items-center justify-center gap-2 shadow-lg shadow-slate-900/20"
                 >
                   Xem trên Google Maps
                   <ExternalLink className="w-5 h-5" />
@@ -398,9 +408,9 @@ export default function PlaceDetailPage() {
             </div>
 
             {/* Share Section */}
-            <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100">
-              <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                <Share2 className="w-5 h-5 text-primary-600" />
+            <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+              <h3 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
+                <Share2 className="w-5 h-5 text-slate-400" />
                 Chia sẻ địa điểm
               </h3>
               <div className="flex flex-col gap-3">
@@ -420,7 +430,7 @@ export default function PlaceDetailPage() {
                 </button>
                 <button
                   onClick={handleCopyLink}
-                  className="flex items-center justify-center gap-2 w-full py-3 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition-colors"
+                  className="flex items-center justify-center gap-2 w-full py-3 bg-slate-100 text-slate-600 font-bold rounded-xl hover:bg-slate-200 transition-colors"
                 >
                   {isCopied ? <Check className="w-5 h-5 text-green-600" /> : <Copy className="w-5 h-5" />}
                   {isCopied ? "Đã sao chép" : "Sao chép liên kết"}
