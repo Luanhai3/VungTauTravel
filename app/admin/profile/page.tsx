@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Place } from "@/lib/data";
-import { Lock, Save, User as UserIcon, Camera, Heart, MapPin, ShieldCheck, QrCode, Edit2, Check, X, ChevronLeft, ChevronRight, Download } from "lucide-react";
+import { Lock, Save, User as UserIcon, Camera, Heart, MapPin, ShieldCheck, QrCode, Edit2, Check, X, ChevronLeft, ChevronRight, Download, LogOut } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/client";
@@ -302,6 +302,12 @@ export default function ProfilePage() {
     }
   };
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push("/");
+    router.refresh();
+  };
+
   const totalPages = Math.ceil(favoritePlaces.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const currentFavorites = favoritePlaces.slice(startIndex, startIndex + ITEMS_PER_PAGE);
@@ -316,7 +322,16 @@ export default function ProfilePage() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <h1 className="text-3xl font-bold text-gray-900 mb-8">Thông tin tài khoản</h1>
+      <div className="flex items-center justify-between mb-8">
+        <h1 className="text-3xl font-bold text-gray-900">Thông tin tài khoản</h1>
+        <button
+          onClick={handleLogout}
+          className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-lg transition-colors font-medium shadow-sm"
+        >
+          <LogOut className="w-4 h-4" />
+          Đăng xuất
+        </button>
+      </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="p-6 border-b border-gray-100 bg-gray-50">
