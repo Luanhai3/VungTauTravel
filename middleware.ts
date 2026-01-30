@@ -8,6 +8,12 @@ export async function middleware(request: NextRequest) {
     },
   });
 
+  // 1. Chống Bot cơ bản: Chặn request không có User-Agent
+  const userAgent = request.headers.get("user-agent");
+  if (!userAgent) {
+    return new NextResponse("Bad Request: No User-Agent", { status: 400 });
+  }
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -57,7 +63,7 @@ export async function middleware(request: NextRequest) {
       .eq('id', user.id)
       .single();
 
-    if (profile?.role !== 'admin' && user.email !== "hoangthienluan17@gmail.com") {
+    if (profile?.role !== 'admin') {
       return NextResponse.redirect(new URL("/forbidden", request.url));
     }
   }

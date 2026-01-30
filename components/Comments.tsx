@@ -1,11 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Star, User, Send, Trash2 } from "lucide-react";
-import { Comment, getCommentsByPlace, addComment, deleteComment } from "@/lib/comments";
+import { Star, User as UserIcon, Send, Trash2, Flag, AlertTriangle, X, ChevronLeft, ChevronRight, Heart } from "lucide-react";
+import { Comment, getCommentsByPlace, addComment, deleteComment, reportComment, getAverageRating, toggleLikeComment } from "@/lib/comments";
 import { createClient } from "@/utils/supabase/client";
 import Image from "next/image";
 import Link from "next/link";
+import { User } from "@supabase/supabase-js";
+
+interface UserWithRole extends User {
+  role?: string;
+}
 
 export default function Comments({ placeId }: { placeId: string }) {
   const [comments, setComments] = useState<Comment[]>([]);
@@ -13,21 +18,41 @@ export default function Comments({ placeId }: { placeId: string }) {
   const [rating, setRating] = useState(5);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<UserWithRole | null>(null);
+  const [lastSubmitTime, setLastSubmitTime] = useState(0);
+  const [reportModalOpen, setReportModalOpen] = useState(false);
+  const [reportCommentId, setReportCommentId] = useState<string | null>(null);
+  const [reportReason, setReportReason] = useState("");
+  const [page, setPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [averageRating, setAverageRating] = useState(0);
+  const ITEMS_PER_PAGE = 5;
   const supabase = createClient();
 
   useEffect(() => {
     const fetchUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+        setUser({ ...user, role: profile?.role });
+      }
     };
     fetchUser();
     loadComments();
-  }, [placeId]);
+  }, [placeId, page]);
 
   const loadComments = async () => {
-    const data = await getCommentsByPlace(placeId);
+    const { data, count } = await getCommentsByPlace(placeId, page, ITEMS_PER_PAGE);
     setComments(data);
+    setTotalCount(count);
+    
+    const avg = await getAverageRating(placeId);
+    setAverageRating(avg || 0);
+    
     setLoading(false);
   };
 
@@ -35,15 +60,29 @@ export default function Comments({ placeId }: { placeId: string }) {
     e.preventDefault();
     if (!content.trim()) return;
 
+    // Chống Spam: Giới hạn 60 giây giữa các lần bình luận
+    const COOLDOWN_TIME = 60000; // 60 giây
+    const timeSinceLastSubmit = Date.now() - lastSubmitTime;
+    if (timeSinceLastSubmit < COOLDOWN_TIME) {
+      alert(`Bạn thao tác quá nhanh. Vui lòng đợi ${Math.ceil((COOLDOWN_TIME - timeSinceLastSubmit) / 1000)} giây nữa.`);
+      return;
+    }
+
     setSubmitting(true);
     try {
       await addComment(placeId, content, rating);
       setContent("");
       setRating(5);
-      loadComments();
+      setLastSubmitTime(Date.now());
+      
+      if (page !== 1) {
+        setPage(1); // Quay về trang 1 để thấy bình luận mới
+      } else {
+        loadComments();
+      }
     } catch (error) {
       console.error(error);
-      alert("Lỗi khi gửi bình luận");
+      alert(error instanceof Error ? error.message : "Lỗi khi gửi bình luận");
     } finally {
       setSubmitting(false);
     }
@@ -57,6 +96,53 @@ export default function Comments({ placeId }: { placeId: string }) {
       } catch (error) {
         alert("Lỗi khi xóa bình luận");
       }
+    }
+  };
+
+  const openReportModal = (commentId: string) => {
+    setReportCommentId(commentId);
+    setReportModalOpen(true);
+  };
+
+  const handleReportSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!reportCommentId || !reportReason.trim()) return;
+    
+    try {
+      await reportComment(reportCommentId, reportReason);
+      alert("Cảm ơn bạn đã báo cáo. Chúng tôi sẽ xem xét vi phạm này.");
+      setReportModalOpen(false);
+      setReportReason("");
+      setReportCommentId(null);
+    } catch (error) {
+      alert("Lỗi khi gửi báo cáo: " + (error instanceof Error ? error.message : "Unknown error"));
+    }
+  };
+
+  const handleLike = async (commentId: string) => {
+    if (!user) {
+      alert("Vui lòng đăng nhập để thích bình luận.");
+      return;
+    }
+
+    // Optimistic update (Cập nhật giao diện ngay lập tức)
+    setComments(prev => prev.map(c => {
+      if (c.id === commentId) {
+        return {
+          ...c,
+          user_has_liked: !c.user_has_liked,
+          likes_count: (c.likes_count || 0) + (c.user_has_liked ? -1 : 1)
+        };
+      }
+      return c;
+    }));
+
+    try {
+      await toggleLikeComment(commentId);
+    } catch (error) {
+      console.error("Lỗi like:", error);
+      // Revert nếu lỗi (có thể thêm logic revert ở đây nếu cần thiết)
+      loadComments(); 
     }
   };
 
@@ -78,11 +164,9 @@ export default function Comments({ placeId }: { placeId: string }) {
         <div className="flex items-center gap-1">
           <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
           <span className="font-bold text-lg text-slate-900">
-            {comments.length > 0 
-              ? (comments.reduce((acc, c) => acc + c.rating, 0) / comments.length).toFixed(1) 
-              : "0.0"}
+            {averageRating.toFixed(1)}
           </span>
-          <span className="text-slate-500 text-sm">({comments.length} đánh giá)</span>
+          <span className="text-slate-500 text-sm">({totalCount} đánh giá)</span>
         </div>
       </div>
 
@@ -166,7 +250,7 @@ export default function Comments({ placeId }: { placeId: string }) {
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-slate-400">
-                        <User className="w-6 h-6" />
+                        <UserIcon className="w-6 h-6" />
                       </div>
                     )}
                   </div>
@@ -186,17 +270,39 @@ export default function Comments({ placeId }: { placeId: string }) {
               </div>
               <p className="text-slate-700 leading-relaxed">{comment.content}</p>
               
-              {/* Nút xóa cho chính chủ hoặc admin */}
-              {(user?.id === comment.user_id || user?.email === 'hoangthienluan17@gmail.com') && (
-                <div className="mt-4 flex justify-end">
+              <div className="mt-4 flex justify-end gap-3">
+                {/* Nút Like */}
+                <button
+                  onClick={() => handleLike(comment.id)}
+                  className={`text-sm flex items-center gap-1 px-3 py-1 rounded-lg transition-colors ${
+                    comment.user_has_liked ? "text-red-500 bg-red-50" : "text-slate-400 hover:text-red-500 hover:bg-red-50"
+                  }`}
+                >
+                  <Heart className={`w-4 h-4 ${comment.user_has_liked ? "fill-current" : ""}`} />
+                  <span>{comment.likes_count || 0}</span>
+                </button>
+
+                {/* Nút báo cáo cho người khác */}
+                {user && user.id !== comment.user_id && (
+                  <button
+                    onClick={() => openReportModal(comment.id)}
+                    className="text-sm text-slate-400 hover:text-orange-500 flex items-center gap-1 px-3 py-1 rounded-lg hover:bg-orange-50 transition-colors"
+                    title="Báo cáo vi phạm"
+                  >
+                    <Flag className="w-4 h-4" /> <span className="hidden sm:inline">Báo cáo</span>
+                  </button>
+                )}
+
+                {/* Nút xóa cho chính chủ hoặc admin */}
+                {(user?.id === comment.user_id || user?.role === 'admin') && (
                   <button
                     onClick={() => handleDelete(comment.id)}
                     className="text-sm text-red-500 hover:text-red-400 flex items-center gap-1 px-3 py-1 rounded-lg hover:bg-red-500/10 transition-colors"
                   >
-                    <Trash2 className="w-4 h-4" /> Xóa bình luận
+                    <Trash2 className="w-4 h-4" /> <span className="hidden sm:inline">Xóa</span>
                   </button>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           ))
         ) : (
@@ -208,6 +314,77 @@ export default function Comments({ placeId }: { placeId: string }) {
           </div>
         )}
       </div>
+
+      {/* Pagination */}
+      {Math.ceil(totalCount / ITEMS_PER_PAGE) > 1 && (
+        <div className="flex justify-center items-center gap-4 mt-8 pt-4 border-t border-slate-100">
+          <button
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page === 1}
+            className="p-2 rounded-full hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-slate-600"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          <span className="text-sm font-medium text-slate-600">
+            Trang {page} / {Math.ceil(totalCount / ITEMS_PER_PAGE)}
+          </span>
+          <button
+            onClick={() => setPage((p) => Math.min(Math.ceil(totalCount / ITEMS_PER_PAGE), p + 1))}
+            disabled={page === Math.ceil(totalCount / ITEMS_PER_PAGE)}
+            className="p-2 rounded-full hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-slate-600"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
+        </div>
+      )}
+
+      {/* Modal Báo cáo */}
+      {reportModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
+            <div className="p-6 border-b border-slate-100 flex justify-between items-center">
+              <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5 text-orange-500" />
+                Báo cáo vi phạm
+              </h3>
+              <button 
+                onClick={() => setReportModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <form onSubmit={handleReportSubmit} className="p-6">
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-slate-700 mb-2">Lý do báo cáo</label>
+                <textarea
+                  value={reportReason}
+                  onChange={(e) => setReportReason(e.target.value)}
+                  className="w-full p-3 border border-slate-200 rounded-lg focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none resize-none bg-slate-50 text-slate-900"
+                  rows={4}
+                  placeholder="Vui lòng cho chúng tôi biết lý do (Spam, ngôn từ đả kích, thông tin sai lệch...)"
+                  required
+                />
+              </div>
+              <div className="flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setReportModalOpen(false)}
+                  className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg font-medium transition-colors"
+                >
+                  Hủy bỏ
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-medium transition-colors shadow-lg shadow-orange-500/20"
+                >
+                  Gửi báo cáo
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

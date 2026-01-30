@@ -1,53 +1,82 @@
-"use client";
-
+import { createClient } from "@supabase/supabase-js";
+import { unstable_cache } from "next/cache";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, Sparkles } from "lucide-react";
-import { useState, useEffect } from "react";
 
-export default function Categories() {
-  const [isLoading, setIsLoading] = useState(true);
+// Metadata definitions for styling and descriptions
+const CATEGORY_METADATA: Record<string, any> = {
+  "Ăn uống": {
+    icon: "🍜",
+    slug: "an-uong",
+    description: "Hương vị biển cả & đặc sản địa phương",
+    image: "/images/categories/an-uong.jpg",
+    className: "md:col-span-2",
+  },
+  "Hẹn hò": {
+    icon: "💕",
+    slug: "hen-ho",
+    description: "Không gian lãng mạn cho lứa đôi",
+    image: "/images/categories/hen-ho.jpg",
+    className: "md:col-span-1",
+  },
+  "Check-in": {
+    icon: "📸",
+    slug: "check-in",
+    description: "Góc sống ảo triệu like",
+    image: "/images/categories/check-in.jpg",
+    className: "md:col-span-1",
+  },
+  "Du lịch": {
+    icon: "🌅",
+    slug: "du-lich",
+    description: "Khám phá thiên nhiên hùng vĩ",
+    image: "/images/categories/du-lich.jpg",
+    className: "md:col-span-2",
+  },
+};
 
-  useEffect(() => {
-    // Simulate loading delay for skeleton effect
-    const timer = setTimeout(() => setIsLoading(false), 1500);
-    return () => clearTimeout(timer);
-  }, []);
+const getCategories = unstable_cache(
+  async () => {
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
 
-  const categories = [
-    {
-      icon: "🍜",
-      name: "Ăn uống",
-      slug: "an-uong",
-      description: "Hương vị biển cả & đặc sản địa phương",
-      image: "/images/categories/an-uong.jpg",
-      className: "md:col-span-2",
-    },
-    {
-      icon: "💕",
-      name: "Hẹn hò",
-      slug: "hen-ho",
-      description: "Không gian lãng mạn cho lứa đôi",
-      image: "/images/categories/hen-ho.jpg",
-      className: "md:col-span-1",
-    },
-    {
-      icon: "📸",
-      name: "Check-in",
-      slug: "check-in",
-      description: "Góc sống ảo triệu like",
-      image: "/images/categories/check-in.jpg",
-      className: "md:col-span-1",
-    },
-    {
-      icon: "🌅",
-      name: "Du lịch",
-      slug: "du-lich",
-      description: "Khám phá thiên nhiên hùng vĩ",
-      image: "/images/categories/du-lich.jpg",
-      className: "md:col-span-2",
-    },
-  ];
+    const { data } = await supabase
+      .from('places')
+      .select('category, image_url');
+
+    if (!data) return [];
+
+    const categoryMap = new Map<string, any>();
+
+    data.forEach((place: any) => {
+      if (!categoryMap.has(place.category)) {
+        const metadata = CATEGORY_METADATA[place.category] || {};
+        
+        categoryMap.set(place.category, {
+          name: place.category,
+          slug: metadata.slug || place.category.toLowerCase().replace(/\s+/g, '-'),
+          icon: metadata.icon || "✨",
+          description: metadata.description || `${place.category} tại Vũng Tàu`,
+          image: metadata.image || place.image_url, // Prefer metadata image, fallback to place image
+          className: metadata.className || "md:col-span-1",
+          count: 0
+        });
+      }
+      const cat = categoryMap.get(place.category);
+      cat.count++;
+    });
+
+    return Array.from(categoryMap.values());
+  },
+  ['categories-list'],
+  { revalidate: 3600, tags: ['places'] }
+);
+
+export default async function Categories() {
+  const categories = await getCategories();
 
   return (
     <section id="categories" className="py-24 bg-[#F5FAFF]">
@@ -74,18 +103,9 @@ export default function Categories() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-[350px]">
-          {isLoading ? (
-            <>
-              <CategorySkeleton className="md:col-span-2" />
-              <CategorySkeleton className="md:col-span-1" />
-              <CategorySkeleton className="md:col-span-1" />
-              <CategorySkeleton className="md:col-span-2" />
-            </>
-          ) : (
-            categories.map((category) => (
-              <CategoryCard key={category.name} category={category} />
-            ))
-          )}
+          {categories.map((category) => (
+            <CategoryCard key={category.name} category={category} />
+          ))}
         </div>
       </div>
     </section>
@@ -93,8 +113,6 @@ export default function Categories() {
 }
 
 function CategoryCard({ category }: { category: any }) {
-  const [isLoaded, setIsLoaded] = useState(false);
-
   return (
     <Link
       href={`/categories/${category.slug}`}
@@ -108,9 +126,8 @@ function CategoryCard({ category }: { category: any }) {
           title={`Khám phá ${category.name} tại Vũng Tàu`}
           fill
           className={`object-cover duration-700 group-hover:scale-110 transition-all ${
-            isLoaded ? "opacity-100" : "opacity-0"
+            "opacity-100"
           }`}
-          onLoad={() => setIsLoaded(true)}
           placeholder="blur"
           blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mN8/+F9PQAI8wNPvd7POQAAAABJRU5ErkJggg=="
         />
@@ -134,28 +151,10 @@ function CategoryCard({ category }: { category: any }) {
           </p>
           
           <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-white border border-white/30 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-500 delay-200 hover:bg-white hover:text-slate-900">
-            Khám phá <ArrowRight className="w-4 h-4" />
+            {category.count > 0 ? `${category.count} địa điểm` : "Khám phá"} <ArrowRight className="w-4 h-4" />
           </div>
         </div>
       </div>
     </Link>
-  );
-}
-
-function CategorySkeleton({ className }: { className?: string }) {
-  return (
-    <div className={`relative rounded-3xl overflow-hidden bg-slate-100 animate-pulse ${className}`}>
-      <div className="absolute inset-0 p-8 flex flex-col justify-end">
-        <div className="flex items-center justify-between mb-4">
-          <div className="h-8 w-48 bg-slate-200 rounded-lg"></div>
-          <div className="h-10 w-10 bg-slate-200 rounded-full"></div>
-        </div>
-        <div className="space-y-2 mb-6">
-          <div className="h-4 w-full bg-slate-200 rounded"></div>
-          <div className="h-4 w-2/3 bg-slate-200 rounded"></div>
-        </div>
-        <div className="h-10 w-32 bg-slate-200 rounded-full"></div>
-      </div>
-    </div>
   );
 }

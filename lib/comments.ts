@@ -12,21 +12,29 @@ export type Comment = {
     name?: string;
     avatar_url?: string;
   };
+  likes_count?: number;
+  user_has_liked?: boolean;
 };
 
 const supabase = createClient();
 
 // Lấy danh sách bình luận của một địa điểm
-export async function getCommentsByPlace(placeId: string) {
-  const { data, error } = await supabase
+export async function getCommentsByPlace(placeId: string, page: number = 1, limit: number = 5) {
+  const from = (page - 1) * limit;
+  const to = from + limit - 1;
+  
+  const { data: { user } } = await supabase.auth.getUser();
+
+  const { data, error, count } = await supabase
     .from("comments")
-    .select("*")
+    .select("*, comment_likes(count)", { count: "exact" })
     .eq("place_id", placeId)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .range(from, to);
 
   if (error) {
     console.error("Error fetching comments:", error);
-    return [];
+    return { data: [], count: 0 };
   }
 
   if (data && data.length > 0) {
@@ -35,7 +43,7 @@ export async function getCommentsByPlace(placeId: string) {
     const userIds = Array.from(new Set(data.map((c) => c.user_id)))
       .filter((id) => typeof id === 'string' && uuidRegex.test(id));
     
-    if (userIds.length === 0) return data as Comment[];
+    if (userIds.length === 0) return { data: data as Comment[], count: count || 0 };
 
     const { data: profiles, error: profilesError } = await supabase
       .from("profiles")
@@ -47,16 +55,35 @@ export async function getCommentsByPlace(placeId: string) {
       return acc;
     }, {} as Record<string, any>);
 
-    return data.map((comment) => ({
+    // Kiểm tra xem user hiện tại đã like những comment nào chưa
+    let likedCommentIds = new Set<string>();
+    if (user) {
+      const commentIds = data.map(c => c.id);
+      const { data: likes } = await supabase
+        .from("comment_likes")
+        .select("comment_id")
+        .eq("user_id", user.id)
+        .in("comment_id", commentIds);
+      
+      if (likes) {
+        likes.forEach((l: any) => likedCommentIds.add(l.comment_id));
+      }
+    }
+
+    const result = data.map((comment) => ({
       ...comment,
       profiles: profilesMap[comment.user_id] || {
         email: "Người dùng ẩn danh",
         name: "Người dùng ẩn danh"
       },
+      likes_count: comment.comment_likes ? (comment.comment_likes[0] as any)?.count : 0,
+      user_has_liked: likedCommentIds.has(comment.id)
     })) as Comment[];
+
+    return { data: result, count: count || 0 };
   }
 
-  return [];
+  return { data: [], count: 0 };
 }
 
 // Thêm bình luận mới
@@ -91,6 +118,44 @@ export async function deleteComment(commentId: string) {
 
   if (error) throw error;
   return true;
+}
+
+// Báo cáo bình luận
+export async function reportComment(commentId: string, reason: string) {
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) throw new Error("Bạn cần đăng nhập để báo cáo");
+
+  const { error } = await supabase
+    .from("reports")
+    .insert({
+      comment_id: commentId,
+      user_id: user.id,
+      reason: reason
+    });
+
+  if (error) throw error;
+  return true;
+}
+
+// Thích/Bỏ thích bình luận
+export async function toggleLikeComment(commentId: string) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Bạn cần đăng nhập để thích bình luận");
+
+  // Kiểm tra xem đã like chưa
+  const { data } = await supabase
+    .from("comment_likes")
+    .select("*")
+    .eq("comment_id", commentId)
+    .eq("user_id", user.id)
+    .single();
+
+  if (data) {
+    await supabase.from("comment_likes").delete().eq("comment_id", commentId).eq("user_id", user.id);
+  } else {
+    await supabase.from("comment_likes").insert({ comment_id: commentId, user_id: user.id });
+  }
 }
 
 // Tính điểm đánh giá trung bình

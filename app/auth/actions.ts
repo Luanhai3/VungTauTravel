@@ -17,9 +17,16 @@ export async function login(formData: FormData) {
   });
 
   if (error) {
-    const redirectUrl = `/login?message=Đăng nhập thất bại: ${error.message}`;
+    let message = "Đăng nhập thất bại";
+  
+    if (error.message === "Invalid login credentials") {
+      message = "Email hoặc mật khẩu không đúng";
+    }
+  
+    const redirectUrl = `/login?message=${encodeURIComponent(message)}`;
     return redirect(next ? `${redirectUrl}&next=${next}` : redirectUrl);
   }
+  
 
   revalidatePath("/", "layout");
   const target = next || "/";

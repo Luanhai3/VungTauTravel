@@ -26,12 +26,8 @@ export default function AdminLayout({
       
       if (user) {
         // Simple check for UI purposes (Real protection is in page.tsx)
-        if (user.email === 'hoangthienluan17@gmail.com') {
-          setIsAdmin(true);
-        } else {
-          const { data } = await supabase.from('profiles').select('role').eq('id', user.id).single();
-          if (data?.role === 'admin') setIsAdmin(true);
-        }
+        const { data } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+        if (data?.role === 'admin') setIsAdmin(true);
       }
     };
     checkUser();

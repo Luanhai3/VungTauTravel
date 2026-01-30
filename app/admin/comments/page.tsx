@@ -12,17 +12,13 @@ export default async function CommentsPage() {
 
   // Check admin
   let isAdmin = false;
-  if (user.email === 'hoangthienluan17@gmail.com' || user.email === 'hoangthienluan17@gmal.com') {
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single();
+  if (profile?.role === 'admin') {
     isAdmin = true;
-  } else {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single();
-    if (profile?.role === 'admin') {
-      isAdmin = true;
-    }
   }
 
   if (!isAdmin) {

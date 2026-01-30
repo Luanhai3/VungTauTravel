@@ -100,24 +100,43 @@ export default function ProfilePage() {
         return;
       }
 
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        const result = reader.result as string;
-        
-        // Cập nhật metadata của user
-        const { error } = await supabase.auth.updateUser({
-          data: { avatar_url: result }
+      try {
+        setMessage({ type: "", text: "Đang tải ảnh lên..." });
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+
+        // Upload ảnh lên Supabase Storage (Bucket 'avatars')
+        const { error: uploadError } = await supabase.storage
+          .from('avatars')
+          .upload(fileName, file, { upsert: true });
+
+        if (uploadError) throw uploadError;
+
+        // Lấy URL công khai
+        const { data: { publicUrl } } = supabase.storage
+          .from('avatars')
+          .getPublicUrl(fileName);
+
+        // Cập nhật metadata của user với URL ngắn gọn
+        const { error: updateError } = await supabase.auth.updateUser({
+          data: { avatar_url: publicUrl }
         });
 
-        if (error) {
-          setMessage({ type: "error", text: "Lỗi cập nhật ảnh: " + error.message });
-          return;
+        if (updateError) throw updateError;
+
+        // Xóa ảnh cũ trên Storage để tiết kiệm dung lượng
+        if (user.avatarUrl && user.avatarUrl.includes('/avatars/')) {
+          const oldPath = user.avatarUrl.split('/avatars/').pop()?.split('?')[0];
+          if (oldPath) {
+            await supabase.storage.from('avatars').remove([oldPath]);
+          }
         }
 
-        setUser({ ...user, avatarUrl: result });
+        setUser({ ...user, avatarUrl: publicUrl });
         setMessage({ type: "success", text: "Cập nhật ảnh đại diện thành công" });
-      };
-      reader.readAsDataURL(file);
+      } catch (error: any) {
+        setMessage({ type: "error", text: "Lỗi cập nhật ảnh: " + error.message });
+      }
     }
   };
 

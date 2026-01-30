@@ -2,7 +2,7 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { Resend } from "resend";
 import { render } from "@react-email/render";
 import { NotificationEmail } from "../../components/emails/NotificationEmail";
@@ -13,10 +13,6 @@ async function verifyAdmin() {
 
   if (!user) {
     throw new Error("Not authenticated");
-  }
-
-  if (user.email === 'hoangthienluan17@gmail.com' || user.email === 'hoangthienluan17@gmal.com') {
-    return true;
   }
 
   const { data: profile } = await supabase
@@ -123,6 +119,7 @@ export async function createPlace(formData: FormData) {
   if (error) return { success: false, message: error.message };
 
   revalidatePath("/admin/places");
+  revalidateTag("places");
   return { success: true, message: "Thêm địa điểm thành công." };
 }
 
@@ -151,6 +148,7 @@ export async function updatePlace(id: string, formData: FormData) {
   if (error) return { success: false, message: error.message };
 
   revalidatePath("/admin/places");
+  revalidateTag("places");
   return { success: true, message: "Cập nhật địa điểm thành công." };
 }
 
@@ -160,6 +158,7 @@ export async function deletePlace(id: string) {
   const { error } = await supabaseAdmin.from("places").delete().eq("id", id);
   if (error) return { success: false, message: error.message };
   revalidatePath("/admin/places");
+  revalidateTag("places");
   return { success: true, message: "Xóa địa điểm thành công." };
 }
 

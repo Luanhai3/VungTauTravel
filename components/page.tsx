@@ -163,7 +163,17 @@ export default function PlaceDetailPage() {
   };
 
   const handleShareZalo = () => {
-     window.open(`https://zalo.me/share/?url=${encodeURIComponent(window.location.href)}`, '_blank');
+    const url = `https://zalo.me/share/?url=${encodeURIComponent(window.location.href)}`;
+    const width = 600;
+    const height = 600;
+    const left = window.screen.width / 2 - width / 2;
+    const top = window.screen.height / 2 - height / 2;
+
+    window.open(
+      url,
+      'zalo-share-dialog',
+      `width=${width},height=${height},top=${top},left=${left}`
+    );
   };
 
   if (loading) {
