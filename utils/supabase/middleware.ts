@@ -2,11 +2,7 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function updateSession(request: NextRequest) {
-  let response = NextResponse.next({
-    request: {
-      headers: request.headers,
-    },
-  })
+  const response = NextResponse.next()
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -16,16 +12,10 @@ export async function updateSession(request: NextRequest) {
         getAll() {
           return request.cookies.getAll()
         },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => request.cookies.set(name, value))
-          response = NextResponse.next({
-            request: {
-              headers: request.headers,
-            },
-          })
-          cookiesToSet.forEach(({ name, value, options }) =>
+        setAll(cookies) {
+          cookies.forEach(({ name, value, options }) => {
             response.cookies.set(name, value, options)
-          )
+          })
         },
       },
     }
@@ -35,8 +25,11 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Bảo vệ route admin
-  if (request.nextUrl.pathname.startsWith('/admin') && !request.nextUrl.pathname.startsWith('/admin/login')) {
+  // Protect admin routes
+  if (
+    request.nextUrl.pathname.startsWith('/admin') &&
+    !request.nextUrl.pathname.startsWith('/admin/login')
+  ) {
     if (!user) {
       const url = request.nextUrl.clone()
       url.pathname = '/admin/login'
@@ -45,8 +38,8 @@ export async function updateSession(request: NextRequest) {
     }
   }
 
-  // Nếu đã login mà vào trang login thì redirect
-  if (request.nextUrl.pathname.startsWith('/admin/login') && user) {
+  // Redirect logged-in user away from login page
+  if (request.nextUrl.pathname === '/admin/login' && user) {
     const url = request.nextUrl.clone()
     url.pathname = '/admin/profile'
     return NextResponse.redirect(url)
