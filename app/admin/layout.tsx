@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { Home, LayoutDashboard, MapPin, LogOut, Users, Settings, MessageSquare, Mail, Send, Menu, X } from "lucide-react";
 import { signOut } from "@/app/auth/actions";
-import { createClient } from "@/utils/supabase/client";
+import { getSupabaseBrowser } from "@/utils/supabase/client";
 import { useEffect, useState } from "react";
 import { User } from "@supabase/supabase-js";
 
@@ -17,7 +17,7 @@ export default function AdminLayout({
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const supabase = createClient();
+  const supabase = getSupabaseBrowser();
 
   useEffect(() => {
     const checkUser = async () => {

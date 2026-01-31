@@ -4,14 +4,14 @@ import { useState } from "react";
 import { Edit, Trash2, Loader2, Star, MapPin, ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
-import { createClient } from "@/utils/supabase/client";
+import { getSupabaseBrowser } from "@/utils/supabase/client";
 
 export default function PlaceTable({ places }: { places: any[] }) {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: "asc" | "desc" } | null>(null);
   const itemsPerPage = 5;
-  const supabase = createClient();
+  const supabase = getSupabaseBrowser();
 
   const handleDelete = async (id: string) => {
     if (!confirm("Bạn có chắc chắn muốn xóa địa điểm này?")) return;

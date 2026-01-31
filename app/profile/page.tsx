@@ -1,4 +1,4 @@
-import { createClient } from "@/utils/supabase/server";
+import { getSupabaseServer } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 import { signOut } from "@/app/auth/actions";
 import { User, Mail, LogOut, Calendar, Heart, LayoutDashboard } from "lucide-react";
@@ -6,7 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 export default async function Profile() {
-  const supabase = await createClient();
+  const supabase = getSupabaseServer();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {

@@ -1,11 +1,11 @@
-import { createClient } from "@/utils/supabase/server";
+import { getSupabaseServer } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 import PlaceTable from "./place-table";
 import Link from "next/link";
 import { Plus } from "lucide-react";
 
 export default async function PlacesPage() {
-  const supabase = await createClient();
+  const supabase = getSupabaseServer();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) return redirect("/login");
