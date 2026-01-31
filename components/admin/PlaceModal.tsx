@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { X, Upload, Image as ImageIcon, Star, Lock, Trash2, Check } from "lucide-react";
 import { Place, Category } from "@/lib/data";
 import Image from "next/image";
-import { createClient } from "@/utils/supabase/client";
+import { getSupabaseBrowser } from "@/utils/supabase/client";
 import { resizeImage, getCroppedImg } from "@/utils/image";
 import Cropper, { Area } from "react-easy-crop";
 
@@ -42,7 +42,7 @@ export default function PlaceModal({ place, onClose, onSave }: PlaceModalProps) 
   });
   const [previewUrl, setPreviewUrl] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const supabase = createClient();
+  const supabase = getSupabaseBrowser();
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);

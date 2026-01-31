@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Star, User as UserIcon, Send, Trash2, Flag, AlertTriangle, X, ChevronLeft, ChevronRight, Heart } from "lucide-react";
 import { Comment, getCommentsByPlace, addComment, deleteComment, reportComment, getAverageRating, toggleLikeComment } from "@/lib/comments";
-import { createClient } from "@/utils/supabase/client";
+import { getSupabaseBrowser } from "@/utils/supabase/client";
 import Image from "next/image";
 import Link from "next/link";
 import { User } from "@supabase/supabase-js";
@@ -27,7 +27,7 @@ export default function Comments({ placeId }: { placeId: string }) {
   const [totalCount, setTotalCount] = useState(0);
   const [averageRating, setAverageRating] = useState(0);
   const ITEMS_PER_PAGE = 5;
-  const supabase = createClient();
+  const supabase = getSupabaseBrowser();
 
   useEffect(() => {
     const fetchUser = async () => {

@@ -1,20 +1,19 @@
 "use server";
 
-import { createClient } from "@/utils/supabase/server";
-import { createClient as createAdminClient } from "@supabase/supabase-js";
+import { getSupabaseServer } from "@/utils/supabase/server";
+import { getSupabaseAdmin } from "@/utils/supabase/admin";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { Resend } from "resend";
 import { render } from "@react-email/render";
 import { NotificationEmail } from "../../components/emails/NotificationEmail";
 
 async function verifyAdmin() {
-  const supabase = await createClient();
+  const supabase = getSupabaseServer();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
     throw new Error("Not authenticated");
   }
-
   const { data: profile } = await supabase
     .from('profiles')
     .select('role')
@@ -30,14 +29,7 @@ async function verifyAdmin() {
 export async function deleteUser(userId: string) {
   await verifyAdmin();
 
-  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    throw new Error("Missing Supabase service role key.");
-  }
-
-  const supabaseAdmin = createAdminClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY
-  );
+  const supabaseAdmin = getSupabaseAdmin();
 
   const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
 
@@ -50,14 +42,7 @@ export async function deleteUser(userId: string) {
 export async function updateUserRole(userId: string, newRole: string) {
   await verifyAdmin();
 
-  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    throw new Error("Missing Supabase service role key.");
-  }
-
-  const supabaseAdmin = createAdminClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY
-  );
+  const supabaseAdmin = getSupabaseAdmin();
 
   const { error } = await supabaseAdmin
     .from('profiles')
@@ -73,14 +58,7 @@ export async function updateUserRole(userId: string, newRole: string) {
 export async function deleteComment(commentId: string) {
   await verifyAdmin();
 
-  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    throw new Error("Missing Supabase service role key.");
-  }
-
-  const supabaseAdmin = createAdminClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY
-  );
+  const supabaseAdmin = getSupabaseAdmin();
 
   const { error } = await supabaseAdmin
     .from('comments')
@@ -96,10 +74,7 @@ export async function deleteComment(commentId: string) {
 export async function createPlace(formData: FormData) {
   await verifyAdmin();
 
-  const supabaseAdmin = createAdminClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
+  const supabaseAdmin = getSupabaseAdmin();
 
   const placeData = {
     id: formData.get("id") as string,
@@ -126,10 +101,7 @@ export async function createPlace(formData: FormData) {
 export async function updatePlace(id: string, formData: FormData) {
   await verifyAdmin();
 
-  const supabaseAdmin = createAdminClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
+  const supabaseAdmin = getSupabaseAdmin();
 
   const placeData = {
     name: formData.get("name") as string,
@@ -154,7 +126,7 @@ export async function updatePlace(id: string, formData: FormData) {
 
 export async function deletePlace(id: string) {
   await verifyAdmin();
-  const supabaseAdmin = createAdminClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+  const supabaseAdmin = getSupabaseAdmin();
   const { error } = await supabaseAdmin.from("places").delete().eq("id", id);
   if (error) return { success: false, message: error.message };
   revalidatePath("/admin/places");
@@ -164,10 +136,7 @@ export async function deletePlace(id: string) {
 
 export async function deleteSubscriber(id: string) {
   await verifyAdmin();
-  const supabaseAdmin = createAdminClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
+  const supabaseAdmin = getSupabaseAdmin();
 
   const { error } = await supabaseAdmin.from("subscribers").delete().eq("id", id);
 
@@ -215,10 +184,7 @@ export async function sendNewsletter(subject: string, content: string) {
     return { success: false, message: "Chưa cấu hình Resend API Key." };
   }
 
-  const supabaseAdmin = createAdminClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
+  const supabaseAdmin = getSupabaseAdmin();
 
   const { data: subscribers, error: dbError } = await supabaseAdmin
     .from("subscribers")
@@ -263,10 +229,7 @@ export async function sendNewsletter(subject: string, content: string) {
 export async function scheduleNewsletter(subject: string, content: string, scheduledAt: string) {
   await verifyAdmin();
 
-  const supabaseAdmin = createAdminClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
+  const supabaseAdmin = getSupabaseAdmin();
 
   const { error } = await supabaseAdmin.from("newsletters").insert({
     subject,
@@ -282,10 +245,7 @@ export async function scheduleNewsletter(subject: string, content: string, sched
 export async function cancelNewsletter(id: string) {
   await verifyAdmin();
 
-  const supabaseAdmin = createAdminClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
+  const supabaseAdmin = getSupabaseAdmin();
 
   const { error } = await supabaseAdmin.from("newsletters").delete().eq("id", id).eq("status", "pending");
   if (error) return { success: false, message: "Lỗi khi hủy lịch: " + error.message };
@@ -299,10 +259,7 @@ export async function resendNewsletter(newsletterId: string) {
     return { success: false, message: "Chưa cấu hình Resend API Key." };
   }
 
-  const supabaseAdmin = createAdminClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
+  const supabaseAdmin = getSupabaseAdmin();
 
   // Lấy thông tin newsletter
   const { data: newsletter, error: newsletterError } = await supabaseAdmin.from("newsletters").select("subject, content").eq("id", newsletterId).single();

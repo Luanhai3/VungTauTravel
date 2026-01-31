@@ -1,14 +1,11 @@
 import { Place } from "@/lib/data";
-import { createClient } from "@supabase/supabase-js";
+import { getSupabaseServer } from "@/utils/supabase/server";
 import { unstable_cache } from "next/cache";
 import FeaturedPlacesList from "./FeaturedPlacesList";
 
 const getFeaturedPlaces = unstable_cache(
   async () => {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
+    const supabase = getSupabaseServer();
 
     const { data } = await supabase
       .from('places')

@@ -1,8 +1,8 @@
 import { MetadataRoute } from "next";
-import { createClient } from "@/utils/supabase/server";
+import { getSupabaseServer } from "@/utils/supabase/server";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const supabase = await createClient();
+  const supabase = getSupabaseServer();
   const baseUrl = "https://vung-tau-travel.vercel.app";
 
   // 1. Các trang tĩnh

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClient } from "@/utils/supabase/client";
+import { getSupabaseBrowser } from "@/utils/supabase/client";
 import { Calendar, CheckCircle, Clock, XCircle, Plus, Filter, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 
@@ -35,7 +35,7 @@ export default function NewsletterListPage() {
   const [filterStatus, setFilterStatus] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const itemsPerPage = 10;
-  const supabase = createClient();
+  const supabase = getSupabaseBrowser();
 
   useEffect(() => {
     const fetchNewsletters = async () => {
