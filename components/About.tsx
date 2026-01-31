@@ -5,14 +5,13 @@ import Link from "next/link";
 import { ArrowRight, X, MapPin, History, Mountain, Camera, Users, Building2, CheckCircle2 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
+import { motion } from "framer-motion";
 
 export default function About() {
   const [text1, setText1] = useState("");
   const [text2, setText2] = useState("");
   const [showCursor1, setShowCursor1] = useState(true);
-  const [isVisible, setIsVisible] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const textRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLDivElement>(null);
   const [isImageLoaded, setIsImageLoaded] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -51,24 +50,6 @@ export default function About() {
 
   useEffect(() => {
     setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          setIsVisible(true);
-          observer.disconnect();
-        }
-      },
-      { threshold: 0.1 }
-    );
-
-    if (textRef.current) {
-      observer.observe(textRef.current);
-    }
-
-    return () => observer.disconnect();
   }, []);
 
   useEffect(() => {
@@ -136,34 +117,38 @@ export default function About() {
               </h2>
             </div>
 
-            <div ref={textRef} className="space-y-6 text-lg text-slate-600 font-light leading-relaxed">
-              <p 
-                className={`transition-all duration-1000 ease-out transform ${
-                  isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
-                }`}
+            <div className="space-y-6 text-lg text-slate-600 font-light leading-relaxed">
+              <motion.p 
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ duration: 0.8, ease: "easeOut" }}
               >
                 Vũng Tàu không chỉ là điểm đến, mà là nơi đánh thức mọi giác quan. Chỉ cách TP.HCM 2 giờ di chuyển, thành phố biển này chào đón bạn bằng tiếng sóng vỗ rì rào tại Bãi Sau, vẻ đẹp thơ mộng của Bãi Trước và những cung đường ven biển đẹp như tranh vẽ, nơi gió biển mang theo vị mặn mòi phả vào tâm hồn.
-              </p>
-              <p 
-                className={`transition-all duration-1000 ease-out transform delay-300 ${
-                  isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
-                }`}
+              </motion.p>
+              <motion.p 
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
               >
                 Hơn cả một thiên đường nghỉ dưỡng, Vũng Tàu là bản giao hưởng của văn hóa và lịch sử. Hãy thử một lần chinh phục đỉnh núi Nhỏ để chạm tay vào Tượng Chúa Kitô Vua, hay ngắm nhìn toàn cảnh thành phố từ Ngọn Hải Đăng cổ kính. Len lỏi qua những con hẻm nhỏ, bạn sẽ bắt gặp những ngôi chùa thanh tịnh và những biệt thự kiến trúc Pháp cổ điển đầy hoài niệm.
-              </p>
-              <p 
-                className={`transition-all duration-1000 ease-out transform delay-500 ${
-                  isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
-                }`}
+              </motion.p>
+              <motion.p 
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
               >
                 Và đừng quên nuông chiều vị giác với thiên đường ẩm thực nơi đây. Từ chiếc bánh khọt vàng ươm giòn rụm, nồi lẩu cá đuối chua cay đậm đà, đến những bữa tiệc hải sản tươi ngon ngay bên bờ sóng. Dù là nhâm nhi ly cà phê ngắm hoàng hôn buông xuống hay hòa mình vào cuộc sống về đêm sôi động, Vũng Tàu luôn biết cách níu chân du khách bằng những trải nghiệm chân thật nhất.
-              </p>
+              </motion.p>
             </div>
 
-            <div
-              className={`transition-all duration-1000 ease-out transform delay-700 ${
-                isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
-              }`}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 0.8, delay: 0.6, ease: "easeOut" }}
             >
              <button
   onClick={() => setIsModalOpen(true)}
@@ -175,8 +160,7 @@ export default function About() {
   <ArrowRight className="w-5 h-5 opacity-80 group-hover:translate-x-1 transition-all" />
 </button>
 
-
-            </div>
+            </motion.div>
           </div>
         </div>
       </div>

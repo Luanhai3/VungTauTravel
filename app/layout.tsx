@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
-import { createClient } from "@/utils/supabase/server";
+import { getSupabaseServer } from "@/utils/supabase/server";
 import Toast from "@/components/Toast";
 import { Suspense } from "react";
+import PageTransition from "@/components/PageTransition";
+import SmoothScroll from "@/components/SmoothScroll";
 
 export const metadata: Metadata = {
   title: "Vũng Tàu Travel",
@@ -15,7 +17,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const supabase = await createClient();
+  const supabase = getSupabaseServer();
   const { data: { user } } = await supabase.auth.getUser();
 
   let userRole = 'guest';
@@ -36,11 +38,15 @@ export default async function RootLayout({
   return (
     <html lang="vi" suppressHydrationWarning>
       <body suppressHydrationWarning className="bg-[#F5FAFF] text-slate-800 antialiased selection:bg-teal-100 selection:text-teal-900">
-        <Navbar initialUser={user} initialRole={userRole} />
-        <Suspense fallback={null}>
-          <Toast />
-        </Suspense>
-        {children}
+        <SmoothScroll>
+          <Navbar initialUser={user} initialRole={userRole} />
+          <Suspense fallback={null}>
+            <Toast />
+          </Suspense>
+          <PageTransition>
+            {children}
+          </PageTransition>
+        </SmoothScroll>
       </body>
     </html>
   );

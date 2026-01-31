@@ -6,7 +6,7 @@ import { Place } from "@/lib/data";
 import { Lock, Save, User as UserIcon, Camera, Heart, MapPin, ShieldCheck, QrCode, Edit2, Check, X, ChevronLeft, ChevronRight, Download, LogOut, Sparkles } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { createClient } from "@/utils/supabase/client";
+import { getSupabaseBrowser } from "@/utils/supabase/client";
 import { updateUserName } from "@/app/admin/users/actions";
 import { QRCodeCanvas as QRCodeCanvasBase } from "qrcode.react";
 
@@ -34,7 +34,7 @@ export default function ProfilePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 6;
-  const supabase = createClient();
+  const supabase = getSupabaseBrowser();
 
   useEffect(() => {
     const fetchUserAndFavorites = async () => {

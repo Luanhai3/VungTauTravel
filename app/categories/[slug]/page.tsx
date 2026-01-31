@@ -7,7 +7,7 @@ import Image from "next/image";
 import { MapPin, ArrowUpRight, Search, SlidersHorizontal } from "lucide-react";
 import Footer from "@/components/Footer";
 import { Place, Category } from "@/lib/data";
-import { createClient } from "@/utils/supabase/client";
+import { getSupabaseBrowser } from "@/utils/supabase/client";
 
 const categoryMap: Record<string, Category> = {
   "an-uong": "Ăn uống",
@@ -59,7 +59,7 @@ export default function CategoryPage() {
   const [sortBy, setSortBy] = useState<"newest" | "oldest" | "a-z" | "z-a">("newest");
   const [searchQuery, setSearchQuery] = useState("");
   const [imageError, setImageError] = useState<Record<string, boolean>>({});
-  const supabase = createClient();
+  const supabase = getSupabaseBrowser();
 
   useEffect(() => {
     const fetchPlaces = async () => {

@@ -5,12 +5,12 @@ import { useState } from "react";
 import { Mail, MapPin, Phone, ArrowRight } from "lucide-react";
 import SocialLinks from "@/components/SocialLinks";
 import Particles from "@/components/Particles";
-import { createClient } from "@/utils/supabase/client";
+import { getSupabaseBrowser } from "@/utils/supabase/client";
 
 export default function Footer() {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
-  const supabase = createClient();
+  const supabase = getSupabaseBrowser();
 
   const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -1,10 +1,10 @@
 "use server";
 
-import { createClient } from "@/utils/supabase/server";
+import { getSupabaseServer } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
 
 export async function deleteUser(userId: string) {
-  const supabase = await createClient();
+  const supabase = getSupabaseServer();
   
   // Kiểm tra quyền admin
   const { data: { user } } = await supabase.auth.getUser();
@@ -29,7 +29,7 @@ export async function deleteUser(userId: string) {
 }
 
 export async function updateUserRole(userId: string, newRole: string) {
-  const supabase = await createClient();
+  const supabase = getSupabaseServer();
   
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { success: false, message: "Chưa đăng nhập" };
@@ -52,7 +52,7 @@ export async function updateUserRole(userId: string, newRole: string) {
 }
 
 export async function updateUserName(newName: string) {
-  const supabase = await createClient();
+  const supabase = getSupabaseServer();
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { success: false, message: "Chưa đăng nhập" };

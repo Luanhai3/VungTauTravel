@@ -1,0 +1,20 @@
+services:
+  web:
+    container_name: vung-tau-travel
+    build:
+      context: .
+      dockerfile: Dockerfile
+      # Truyền biến môi trường vào quá trình BUILD (quan trọng cho Next.js Client Component)
+      args:
+        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      # Truyền biến môi trường vào quá trình RUNTIME (cho Server Component/API)
+      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+    env_file:
+      - .env

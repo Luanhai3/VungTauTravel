@@ -1,12 +1,25 @@
-import { type NextRequest } from 'next/server'
-import { updateSession } from '@/utils/supabase/middleware'
+import { createServerClient } from '@supabase/ssr'
+import { NextResponse } from 'next/server'
 
-export async function middleware(request: NextRequest) {
-  return await updateSession(request)
-}
+export async function middleware(req: any) {
+  const res = NextResponse.next()
 
-export const config = {
-  matcher: [
-    '/admin/:path*',
-  ],
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get: (name) => req.cookies.get(name)?.value,
+        set: (name, value, options) => {
+          res.cookies.set({ name, value, ...options })
+        },
+        remove: (name, options) => {
+          res.cookies.set({ name, value: '', ...options })
+        },
+      },
+    }
+  )
+
+  await supabase.auth.getUser()
+  return res
 }

@@ -9,7 +9,7 @@ import { Facebook } from "@/components/Icons";
 import Footer from "@/components/Footer";
 import { Place } from "@/lib/data";
 import Comments from "@/components/Comments";
-import { createClient } from "@/utils/supabase/client";
+import { getSupabaseBrowser } from "@/utils/supabase/client";
 
 const generateSlug = (str: string) => {
   return str
@@ -44,7 +44,7 @@ export default function PlaceDetailPage() {
   const [averageRating, setAverageRating] = useState(0);
   const [totalReviews, setTotalReviews] = useState(0);
   const router = useRouter();
-  const supabase = createClient();
+  const supabase = getSupabaseBrowser();
 
   useEffect(() => {
     const fetchData = async () => {

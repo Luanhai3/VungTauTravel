@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import { getSupabaseServer } from "@/utils/supabase/server";
 import { unstable_cache } from "next/cache";
 import Link from "next/link";
 import { ArrowRight, Sparkles } from "lucide-react";
@@ -59,10 +59,7 @@ const CATEGORY_METADATA: Record<string, any> = {
 
 const getCategories = unstable_cache(
   async () => {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
+    const supabase = getSupabaseServer();
 
     const { data } = await supabase
       .from('places')

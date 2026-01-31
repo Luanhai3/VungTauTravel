@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { Menu, X, Search, Heart, User } from "lucide-react";
 import Image from "next/image";
-import { createClient } from "@/utils/supabase/client";
+import { getSupabaseBrowser } from "@/utils/supabase/client";
 import { User as SupabaseUser } from "@supabase/supabase-js";
 
 interface NavbarProps {
@@ -16,7 +16,7 @@ interface NavbarProps {
 export default function Navbar({ initialUser }: NavbarProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const supabase = createClient();
+  const supabase = getSupabaseBrowser();
 
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);

@@ -1,124 +1,106 @@
-"use client";
-
-import { useEffect, useState } from "react";
-import { createClient } from "@/utils/supabase/client";
-import { Calendar, CheckCircle, Clock, XCircle, Plus, Eye, X } from "lucide-react";
+import { createClient } from "@/utils/supabase/server";
+import { redirect } from "next/navigation";
+import { MapPin, MessageSquare, Users, Mail, ArrowRight } from "lucide-react";
 import Link from "next/link";
 
-interface Newsletter {
-  id: string;
-  subject: string;
-  content: string;
-  status: 'pending' | 'sent' | 'failed';
-  scheduled_at: string | null;
-  created_at: string;
-}
-
-export default function NewsletterListPage() {
-  const [newsletters, setNewsletters] = useState<Newsletter[]>([]);
-  const [selectedNewsletter, setSelectedNewsletter] = useState<Newsletter | null>(null);
+export default async function AdminPage() {
   const supabase = createClient();
+  
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/admin/login");
 
-  useEffect(() => {
-    const fetchNewsletters = async () => {
-      const { data } = await supabase
-        .from('newsletters')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      if (data) {
-        setNewsletters(data);
-      }
-    };
+  // Lấy thống kê dữ liệu từ Supabase
+  const { count: placesCount } = await supabase.from('places').select('*', { count: 'exact', head: true });
+  const { count: commentsCount } = await supabase.from('comments').select('*', { count: 'exact', head: true });
+  const { count: usersCount } = await supabase.from('profiles').select('*', { count: 'exact', head: true });
+  const { count: subscribersCount } = await supabase.from('subscribers').select('*', { count: 'exact', head: true });
 
-    fetchNewsletters();
-  }, [supabase]);
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'sent':
-        return <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800"><CheckCircle className="w-3 h-3" /> Đã gửi</span>;
-      case 'failed':
-        return <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800"><XCircle className="w-3 h-3" /> Thất bại</span>;
-      default:
-        return <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800"><Clock className="w-3 h-3" /> Chờ gửi</span>;
-    }
-  };
+  const stats = [
+    { 
+      label: "Địa điểm", 
+      value: placesCount || 0, 
+      icon: MapPin, 
+      color: "text-blue-600", 
+      bg: "bg-blue-50",
+      href: "/admin/places" 
+    },
+    { 
+      label: "Bình luận", 
+      value: commentsCount || 0, 
+      icon: MessageSquare, 
+      color: "text-green-600", 
+      bg: "bg-green-50",
+      href: "/admin/comments" 
+    },
+    { 
+      label: "Người dùng", 
+      value: usersCount || 0, 
+      icon: Users, 
+      color: "text-purple-600", 
+      bg: "bg-purple-50",
+      href: "/admin/users" 
+    },
+    { 
+      label: "Đăng ký tin", 
+      value: subscribersCount || 0, 
+      icon: Mail, 
+      color: "text-orange-600", 
+      bg: "bg-orange-50",
+      href: "/admin/newsletter/list" 
+    },
+  ];
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-28 pb-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-6xl mx-auto space-y-8">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-black text-gray-900">Danh sách Newsletter</h1>
-            <p className="text-gray-600 mt-1">Quản lý các bản tin đã gửi và lên lịch.</p>
-          </div>
-          <Link 
-            href="/admin/newsletter" 
-            className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white font-bold rounded-lg hover:bg-primary-700 transition-colors shadow-sm"
-          >
-            <Plus className="w-5 h-5" />
-            Soạn mới
-          </Link>
+    <div className="space-y-8">
+      <div className="flex justify-between items-end">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Tổng quan</h1>
+          <p className="text-gray-500 mt-2">
+            Xin chào, <span className="font-semibold text-gray-900">{user.user_metadata.full_name || user.email}</span> 👋
+          </p>
         </div>
+        <div className="text-sm text-gray-500">
+          Cập nhật lần cuối: {new Date().toLocaleTimeString('vi-VN')}
+        </div>
+      </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm text-left text-gray-500">
-              <thead className="text-xs text-gray-700 uppercase bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3">Tiêu đề</th>
-                  <th className="px-6 py-3">Trạng thái</th>
-                  <th className="px-6 py-3">Lên lịch gửi</th>
-                  <th className="px-6 py-3">Ngày tạo</th>
-                  <th className="px-6 py-3 text-right">Hành động</th>
-                </tr>
-              </thead>
-              <tbody>
-                {newsletters.length > 0 ? (
-                  newsletters.map((item) => (
-                    <tr key={item.id} className="bg-white border-b hover:bg-gray-50">
-                      <td className="px-6 py-4 font-medium text-gray-900">
-                        {item.subject}
-                      </td>
-                      <td className="px-6 py-4">
-                        {getStatusBadge(item.status)}
-                      </td>
-                      <td className="px-6 py-4">
-                        {item.scheduled_at ? (
-                          <div className="flex items-center gap-2 text-gray-600">
-                            <Calendar className="w-4 h-4" />
-                            {new Date(item.scheduled_at).toLocaleString('vi-VN')}
-                          </div>
-                        ) : (
-                          <span className="text-gray-400 italic">Gửi ngay</span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 text-gray-400">
-                        {new Date(item.created_at).toLocaleDateString('vi-VN')}
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <button
-                          onClick={() => setSelectedNewsletter(item)}
-                          className="p-2 text-gray-500 hover:bg-gray-100 rounded-full transition-colors"
-                          title="Xem chi tiết"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={4} className="px-6 py-8 text-center text-gray-500">
-                      Chưa có newsletter nào.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {stats.map((stat, index) => {
+          const Icon = stat.icon;
+          return (
+            <Link 
+              key={index} 
+              href={stat.href}
+              className="group bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200 hover:-translate-y-1"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className={`p-3 rounded-xl ${stat.bg}`}>
+                  <Icon className={`w-6 h-6 ${stat.color}`} />
+                </div>
+                <span className="flex items-center text-xs font-medium text-gray-400 group-hover:text-gray-600 transition-colors">
+                  Chi tiết <ArrowRight className="w-3 h-3 ml-1" />
+                </span>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-500">{stat.label}</p>
+                <h3 className="text-3xl font-bold text-gray-900 mt-1">{stat.value}</h3>
+              </div>
+            </Link>
+          );
+        })}
+      </div>
+
+      <div className="bg-gradient-to-r from-teal-500 to-cyan-600 rounded-2xl p-8 text-white shadow-lg">
+        <h2 className="text-2xl font-bold mb-2">Quản lý nội dung Vũng Tàu Travel</h2>
+        <p className="text-teal-100 mb-6 max-w-2xl">
+          Hệ thống quản trị giúp bạn dễ dàng cập nhật địa điểm, kiểm duyệt bình luận và quản lý người dùng.
+        </p>
+        <Link 
+          href="/admin/places" 
+          className="inline-flex items-center px-5 py-2.5 bg-white text-teal-600 font-bold rounded-lg hover:bg-teal-50 transition-colors shadow-sm"
+        >
+          Thêm địa điểm mới
+        </Link>
       </div>
     </div>
   );

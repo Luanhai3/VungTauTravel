@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Loader2, Save, ArrowLeft, Upload, Image as ImageIcon, X, Lock, Trash2, Check, Plus } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
-import { createClient } from "@/utils/supabase/client";
+import { getSupabaseBrowser } from "@/utils/supabase/client";
 import { resizeImage, getCroppedImg } from "@/utils/image";
 import Cropper, { Area } from "react-easy-crop";
 
@@ -33,7 +33,7 @@ export default function PlaceForm({ place, isEdit = false }: PlaceFormProps) {
   const [previewUrl, setPreviewUrl] = useState<string>(place?.image_url || "");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
-  const supabase = createClient();
+  const supabase = getSupabaseBrowser();
   const [isAdmin, setIsAdmin] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isDragging, setIsDragging] = useState(false);

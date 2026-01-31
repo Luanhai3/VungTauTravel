@@ -1,4 +1,4 @@
-import { createClient } from "@/utils/supabase/client";
+import { getSupabaseBrowser } from "@/utils/supabase/client";
 
 export type Comment = {
   id: string;
@@ -16,7 +16,7 @@ export type Comment = {
   user_has_liked?: boolean;
 };
 
-const supabase = createClient();
+const supabase = getSupabaseBrowser();
 
 // Lấy danh sách bình luận của một địa điểm
 export async function getCommentsByPlace(placeId: string, page: number = 1, limit: number = 5) {

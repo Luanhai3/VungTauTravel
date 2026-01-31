@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Trash2, User as UserIcon, ChevronLeft, ChevronRight, Search, ArrowUpDown, ArrowUp, ArrowDown, BarChart3, Download, Loader2 } from "lucide-react";
 import UserModal from "@/components/admin/UserModal";
-import { createClient } from "@/utils/supabase/client";
+import { getSupabaseBrowser } from "@/utils/supabase/client";
 import { deleteUser, updateUserRole } from "@/app/admin/users/actions";
 
 interface UserProfile {
@@ -48,7 +48,7 @@ export default function UsersPage() {
   const [isAuthChecked, setIsAuthChecked] = useState(false);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const router = useRouter();
-  const supabase = createClient();
+  const supabase = getSupabaseBrowser();
 
   useEffect(() => {
     const checkUser = async () => {
