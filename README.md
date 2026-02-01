@@ -54,7 +54,10 @@ npm start
 1. Push to GitHub: `git@github.com:Luanhai3/VungTauTravel.git`
 2. In Vercel: **New Project** → Import repo **VungTauTravel**
 3. Framework: **Next.js** (auto-detected). Root: `./`
-4. Add env: `NEXT_PUBLIC_APP_URL` = `https://your-vercel-domain.vercel.app`
+4. Add Environment Variables:
+   - `NEXT_PUBLIC_APP_URL`: Your Vercel domain (e.g., `https://vungtautravel.vercel.app`)
+   - `NEXT_PUBLIC_SUPABASE_URL`: From your Supabase project settings.
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`: From your Supabase project settings.
 5. Deploy.
 
 CLI:
