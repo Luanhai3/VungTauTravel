@@ -1,14 +1,10 @@
 export default function FilmGrain() {
 	return (
 	  <div
-		className="
-		  pointer-events-none
-		  fixed inset-0 z-[60]
-		  opacity-[0.035]
-		  mix-blend-soft-light
-		"
+		className="fixed inset-0 pointer-events-none z-[5] opacity-[0.12]"
 		style={{
-		  backgroundImage: "url('/noise.png')",
+		  backgroundImage: "url(/noise.png)",
+		  mixBlendMode: "overlay",
 		}}
 	  />
 	);

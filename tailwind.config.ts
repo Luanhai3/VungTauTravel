@@ -37,8 +37,9 @@ const config: Config = {
         xs: "2px",
       },
       fontFamily: {
-        sans: ["var(--font-geist-sans)", "system-ui", "sans-serif"],
-        mono: ["var(--font-geist-mono)", "monospace"],
+        sans: ["var(--font-sans)"],
+        serif: ["var(--font-serif)"],
+        mono: ["var(--font-mono)"],
       },
       animation: {
         "fade-in": "fadeIn 0.6s ease-out forwards",

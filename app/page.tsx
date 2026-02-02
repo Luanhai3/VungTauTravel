@@ -89,7 +89,7 @@ export default function HomePage() {
 <AtmosphereSection />
 
 <SceneSection>
-  <Section title="Featured spots" subtitle="Places, food & check-in ideas">
+  <Section title="ĐIỂM NỔI BẬT" subtitle="Địa điểm, ẩm thực & Check-in">
     <ParallaxSection>
       <Suspense
         fallback={

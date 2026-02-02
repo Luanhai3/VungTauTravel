@@ -10,6 +10,8 @@ import {
 } from "framer-motion";
 import { Button } from "@base-ui/react/button";
 import { useState } from "react";
+import Magnetic from "@/components/Magnetic";
+import MobileMenu from "@/components/MobileMenu";
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -31,6 +33,7 @@ export default function Navbar() {
 
   const [isScrolled, setIsScrolled] = useState(false);
   const [hidden, setHidden] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useMotionValueEvent(scrollY, "change", (latest) => {
     const previous = scrollY.getPrevious() ?? 0;
@@ -45,15 +48,16 @@ export default function Navbar() {
   });
 
   return (
+    <>
     <motion.header
       variants={{
         visible: { y: 0, x: "-50%", opacity: 1 },
-        hidden: { y: -80, x: "-50%", opacity: 0 },
+        hidden: { y: "-100%", x: "-50%", opacity: 0 },
       }}
       initial="visible"
       animate={hidden ? "hidden" : "visible"}
       transition={{ duration: 0.4, ease: "easeInOut" }}
-      className="fixed top-8 left-1/2 z-50 pointer-events-none"
+      className="fixed top-0 left-1/2 z-50 pointer-events-none pt-[calc(2rem+env(safe-area-inset-top))]"
     >
       <nav
         style={{ boxShadow: dynamicShadow.get() }}
@@ -78,7 +82,8 @@ export default function Navbar() {
 
             return (
               <li key={href}>
-                <Link href={href} className="relative px-4 py-2">
+                <Magnetic>
+                <Link href={href} className="relative block px-4 py-2">
                   {isActive && (
                     <motion.span
                       layoutId="nav-pill"
@@ -102,6 +107,7 @@ export default function Navbar() {
                     {label}
                   </span>
                 </Link>
+                </Magnetic>
               </li>
             );
           })}
@@ -109,11 +115,19 @@ export default function Navbar() {
 
         {/* Right spacer / Mobile */}
         <div className="w-[140px] shrink-0 flex justify-end">
-          <Link href="/places" className="lg:hidden">
-            <Button className="text-sm text-white/90">Menu</Button>
-          </Link>
+          <Magnetic>
+            <Button
+              className="text-sm text-white/90 lg:hidden"
+              onClick={() => setIsMobileMenuOpen(true)}
+            >
+              Menu
+            </Button>
+          </Magnetic>
         </div>
       </nav>
     </motion.header>
+
+    <MobileMenu isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} links={navLinks} />
+    </>
   );
 }

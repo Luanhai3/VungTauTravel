@@ -1,12 +1,21 @@
 "use client";
 
-import { useLenis } from "@/hooks/useLenis";
+import { ReactLenis } from "lenis/react";
+import { ReactNode } from "react";
 
-export default function LenisProvider({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  useLenis({ duration: 1.2, enabled: true });
-  return <>{children}</>;
+export default function LenisProvider({ children }: { children: ReactNode }) {
+  return (
+    <ReactLenis
+      root
+      options={{
+        lerp: 0.12,
+        duration: 1.1,
+        smoothWheel: true,
+        wheelMultiplier: 1,
+        touchMultiplier: 1.5,
+      }}
+    >
+      {children}
+    </ReactLenis>
+  );
 }
