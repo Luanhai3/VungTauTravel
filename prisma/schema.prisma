@@ -1,0 +1,40 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Place {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String
+  location    String
+  image       String
+  createdAt   DateTime @default(now())
+}
+
+model Location {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique // Dùng cho URL thân thiện /dia-diem/ten-dia-diem
+  description String?  @db.Text
+  address     String?
+  lat         Float?   // Latitude cho Google Maps
+  lng         Float?   // Longitude cho Google Maps
+  coverImage  String?  // Ảnh đại diện
+  
+  images      LocationImage[] // Gallery ảnh
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model LocationImage {
+  id         String   @id @default(cuid())
+  url        String
+  locationId String
+  location   Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+}
