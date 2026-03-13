@@ -38,3 +38,10 @@ model LocationImage {
   locationId String
   location   Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
 }
+model Admin {
+  id       String   @id @default(cuid())
+  email    String   @unique
+  password String
+  name     String?
+  createdAt DateTime @default(now())
+}
