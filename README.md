@@ -1,36 +1,166 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+🌴 VungTauTravel
 
-## Getting Started
+VungTauTravel is a modern travel platform designed to help users explore destinations, accommodations, and travel services in Vũng Tàu.
+The project is built with a modern full-stack architecture using Next.js, Prisma, and PostgreSQL, optimized for scalability and performance.
 
-First, run the development server:
+✨ Features
 
-```bash
+🌍 Explore popular travel destinations in Vũng Tàu
+
+🏨 Browse hotels and accommodation services
+
+📅 Booking system for travel services
+
+🤖 AI travel planner for personalized itineraries
+
+🧑‍💻 Admin dashboard for managing locations and services
+
+☁️ Cloud-ready architecture (AWS compatible)
+
+🧱 Tech Stack
+Frontend
+
+Next.js
+
+React
+
+Tailwind CSS
+
+Framer Motion
+
+Backend
+
+Node.js API routes
+
+Prisma
+
+PostgreSQL
+
+Cloud Infrastructure
+
+Vercel
+
+Amazon EC2
+
+Amazon S3
+
+Amazon RDS
+
+Amazon CloudFront
+
+🚀 Getting Started
+1. Clone the repository
+git clone https://github.com/yourusername/vungtautravel.git
+cd vungtautravel
+2. Install dependencies
+npm install
+
+or
+
+yarn install
+3. Setup environment variables
+
+Create a .env file in the root directory.
+
+Example:
+
+DATABASE_URL="postgresql://user:password@localhost:5432/vungtautravel"
+NEXT_PUBLIC_SITE_URL="http://localhost:3000"
+OPENAI_API_KEY="your_api_key"
+4. Run development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open your browser at:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+http://localhost:3000
+🗄 Database Setup
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+This project uses Prisma ORM with PostgreSQL.
 
-## Learn More
+Generate Prisma client:
 
-To learn more about Next.js, take a look at the following resources:
+npx prisma generate
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Run migrations:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+npx prisma migrate dev
 
-## Deploy on Vercel
+Open Prisma Studio:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+npx prisma studio
+🏗 Project Structure
+vungtautravel
+│
+├── app
+│   ├── admin
+│   ├── api
+│   ├── dia-diem
+│   ├── dich-vu
+│
+├── components
+│   ├── layout
+│   ├── ui
+│
+├── prisma
+│   └── schema.prisma
+│
+├── public
+│
+└── styles
+⚙️ Production Deployment
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The application can be deployed using a scalable cloud architecture:
+
+Frontend (Next.js)
+      ↓
+Vercel
+      ↓
+API Server (EC2)
+      ↓
+Prisma ORM
+      ↓
+PostgreSQL (RDS)
+      ↓
+Images (S3)
+      ↓
+CDN (CloudFront)
+
+This architecture supports high performance and large traffic scaling.
+
+📦 Build for Production
+npm run build
+npm start
+🔄 CI/CD Pipeline
+
+Continuous deployment can be configured with:
+
+GitHub Actions
+
+Automatic deployment to EC2 on every git push
+
+Pipeline flow:
+
+Developer Push
+     ↓
+GitHub
+     ↓
+GitHub Actions
+     ↓
+Deploy to EC2
+     ↓
+Build & Restart Server
+🤝 Contributing
+
+Contributions are welcome.
+Feel free to open issues or submit pull requests.
+
+📄 License
+
+This project is licensed under the MIT License.
+
+👨‍💻 Author
+
+Louis Hoàng
+
+Software Developer
+Focused on building scalable web platforms and cloud-native applications.
